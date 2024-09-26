@@ -1,20 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, {Suspense, useState, useEffect} from 'react';
 
-function Child({ setData }: { setData: (value: string) => void }) {
-  const index = "sdfsd";
-  setData(index);
-  return <div>child</div>;
+// A component to be rendered after data is fetched
+const MyComponent = () => {
+    return <div>Data has loaded successfully!</div>;
+};
+
+function App() {
+    const [dataLoaded, setDataLoaded] = useState(false);
+
+    // Simulate loading a function or data
+    useEffect(() => {
+        const fetchData = async () => {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate loading
+            setDataLoaded(true);
+        };
+        fetchData();
+    }, []);
+
+    return (
+        <div>
+            {dataLoaded ? <MyComponent/> : <div>Loading function...</div>}
+        </div>
+    );
 }
 
-export default function Page() {
-  const [data, setData] = useState<string>("");
-
-  return (
-    <div>
-      <button onClick={() => console.log(data)}>button</button>
-      <Child setData={setData} />
-    </div>
-  );
-}
+export default App;
