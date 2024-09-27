@@ -151,6 +151,9 @@ export default function PlayTone() {
 
   //listen to the database changes
   useEffect(() => {
+    if (!room) {
+      return;
+    }
     const channel = supabase
       .channel("schema-db-changes")
       .on(
@@ -165,6 +168,7 @@ export default function PlayTone() {
           // Convert the payload to a string and set it as data
           //console.log(payload.new.data);
           setData(payload.new.data);
+          console.log("Data updated");
           console.log(payload.new.data);
         }
       )
@@ -174,7 +178,7 @@ export default function PlayTone() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [room]);
 
   function handleClick() {
     Tone.start();
