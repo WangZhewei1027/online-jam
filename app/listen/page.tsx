@@ -45,7 +45,7 @@ export default function Page() {
     const { data, error } = await supabase
       .from("notes")
       .update({ data: json })
-      .eq("id", 5)
+      .eq("room", "7562cbd2-c9f1-4bde-8c8e-4e8792b58877")
       .select();
 
     if (error) {
