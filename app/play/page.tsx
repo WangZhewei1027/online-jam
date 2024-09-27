@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/spinner";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
+import QRCode from "qrcode";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -78,6 +79,17 @@ export default function PlayTone() {
   });
   const [dataLoaded, setDataLoaded] = useState(false);
   const [room, setRoom] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
+
+  const handleQR = async () => {
+    const currentUrl = window.location.href; // Get the current webpage URL
+    try {
+      const qrCode = await QRCode.toDataURL(currentUrl); // Generate QR code as Data URL
+      setQrCodeUrl(qrCode); // Set the generated QR code to the state
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+    }
+  };
 
   // Preload the sounds once using Tone.js
   useEffect(() => {
@@ -251,10 +263,25 @@ export default function PlayTone() {
               ))}
             </div>
           </div>
-          <div className="flex justify-center items-center mt-8">
-            <Button onClick={handleClick} className="w-16 h-16">
-              {playing ? <PauseIcon /> : <PlayArrowIcon />}
-            </Button>
+          <div className="flex flex-col justify-center items-center mt-8">
+            <div>
+              <Button onClick={handleClick} className="w-16 h-16">
+                {playing ? <PauseIcon /> : <PlayArrowIcon />}
+              </Button>
+            </div>
+
+            <div className="flex flex-col items-center mt-8">
+              <button
+                onClick={handleQR}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg mb-4"
+              >
+                Generate QR Code
+              </button>
+
+              {qrCodeUrl && (
+                <img src={qrCodeUrl} alt="QR Code" className="mt-4" />
+              )}
+            </div>
           </div>
         </div>
       ) : (

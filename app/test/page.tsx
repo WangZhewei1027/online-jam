@@ -1,29 +1,33 @@
 "use client";
 
-import React, {Suspense, useState, useEffect} from 'react';
+import React, { useState } from "react";
+import QRCode from "qrcode";
 
-// A component to be rendered after data is fetched
-const MyComponent = () => {
-    return <div>Data has loaded successfully!</div>;
+const QRCodeComponent = () => {
+  const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
+
+  const handleClick = async () => {
+    const currentUrl = window.location.href; // Get the current webpage URL
+    try {
+      const qrCode = await QRCode.toDataURL(currentUrl); // Generate QR code as Data URL
+      setQrCodeUrl(qrCode); // Set the generated QR code to the state
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center mt-8">
+      <button
+        onClick={handleClick}
+        className="px-4 py-2 bg-blue-500 text-white rounded-lg mb-4"
+      >
+        Generate QR Code
+      </button>
+
+      {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" className="mt-4" />}
+    </div>
+  );
 };
 
-function App() {
-    const [dataLoaded, setDataLoaded] = useState(false);
-
-    // Simulate loading a function or data
-    useEffect(() => {
-        const fetchData = async () => {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate loading
-            setDataLoaded(true);
-        };
-        fetchData();
-    }, []);
-
-    return (
-        <div>
-            {dataLoaded ? <MyComponent/> : <div>Loading function...</div>}
-        </div>
-    );
-}
-
-export default App;
+export default QRCodeComponent;
