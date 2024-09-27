@@ -214,17 +214,20 @@ export default function PlayTone() {
   return (
     <>
       {dataLoaded ? (
-        <div className="overflow-x-auto">
-          <div className="flex flex-col items-center justify-center">
-            <div className="grid grid-rows-4 grid-flow-col">
+        <div className="p-2">
+          <div className="flex flex-row items-center justify-center">
+            <div className="flex flex-col h-full">
               {Object.keys(players).map((key) => (
                 <div
-                  className="flex justify-center items-center px-4 font-serif"
+                  className="flex justify-center items-center px-2 py-5 font-serif"
                   key={key}
                 >
                   {key.charAt(0).toUpperCase() + key.slice(1)}
                 </div>
               ))}
+            </div>
+
+            <div className="grid grid-rows-4 grid-flow-col overflow-x-auto">
               {[...Array(64)].map((_, index) => (
                 <div
                   className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-1`}
@@ -247,11 +250,11 @@ export default function PlayTone() {
                 </div>
               ))}
             </div>
-            <div className="flex justify-center items-center mt-8">
-              <Button onClick={handleClick} className="w-16 h-16">
-                {playing ? <PauseIcon /> : <PlayArrowIcon />}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-center items-center mt-8">
+            <Button onClick={handleClick} className="w-16 h-16">
+              {playing ? <PauseIcon /> : <PlayArrowIcon />}
+            </Button>
           </div>
         </div>
       ) : (
