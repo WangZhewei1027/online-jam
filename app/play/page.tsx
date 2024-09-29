@@ -181,7 +181,7 @@ export default function PlayTone() {
   }
 
   async function handleQRCodeClick() {
-    setQrCodeUrl(await generateQRCode());
+    setQrCodeUrl(await generateQRCode(window.location.href));
   }
 
   return (
@@ -206,15 +206,13 @@ export default function PlayTone() {
               {qrCodeUrl && (
                 <img src={qrCodeUrl} alt="QR Code" className="mt-1" />
               )}
-              <div className="">
-                {window.location.href && (
-                  <a
-                    href={window.location.href}
-                    className="underline text-sm text-ellipsis"
-                  >
-                    {window.location.href}
-                  </a>
-                )}
+              <div className="flex">
+                <a
+                  href={window.location.href}
+                  className="inline-block underline text-sm"
+                >
+                  {window.location.href}
+                </a>
               </div>
             </PopoverContent>
           </Popover>

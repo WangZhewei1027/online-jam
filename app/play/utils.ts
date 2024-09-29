@@ -69,8 +69,8 @@ export async function getRoomName(roomId: string): Promise<any> {
   }
 }
 
-export async function generateQRCode(): Promise<any> {
-  const currentUrl = window.location.href; // Get the current webpage URL
+export async function generateQRCode(url: string): Promise<any> {
+  const currentUrl = url; // Get the current webpage URL
   try {
     const qrCode = await QRCode.toDataURL(currentUrl); // Generate QR code as Data URL
     return qrCode;
