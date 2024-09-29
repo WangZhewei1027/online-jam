@@ -88,6 +88,7 @@ export default function PlayTone() {
   const [roomId, setRoomId] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
   const [roomName, setRoomName] = useState("");
+  const [url, setUrl] = useState("");
 
   // Clock signal
   useEffect(() => {
@@ -182,6 +183,7 @@ export default function PlayTone() {
 
   async function handleQRCodeClick() {
     setQrCodeUrl(await generateQRCode(window.location.href));
+    setUrl(window.location.href);
   }
 
   return (
@@ -207,11 +209,8 @@ export default function PlayTone() {
                 <img src={qrCodeUrl} alt="QR Code" className="mt-1" />
               )}
               <div className="flex">
-                <a
-                  href={window.location.href}
-                  className="inline-block underline text-sm"
-                >
-                  {window.location.href}
+                <a href={url} className="inline-block underline text-sm">
+                  {url}
                 </a>
               </div>
             </PopoverContent>
