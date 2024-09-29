@@ -7,8 +7,19 @@ import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/spinner";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
-import QRCode from "qrcode";
-import { getRoomId, fetchSequencerData, updataSequencerData } from "./utils";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import {
+  getRoomId,
+  fetchSequencerData,
+  updataSequencerData,
+  getRoomName,
+  generateQRCode,
+} from "./utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -76,16 +87,7 @@ export default function PlayTone() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
-
-  const handleQR = async () => {
-    const currentUrl = window.location.href; // Get the current webpage URL
-    try {
-      const qrCode = await QRCode.toDataURL(currentUrl); // Generate QR code as Data URL
-      setQrCodeUrl(qrCode); // Set the generated QR code to the state
-    } catch (error) {
-      console.error("Error generating QR code:", error);
-    }
-  };
+  const [roomName, setRoomName] = useState("");
 
   // Clock signal
   useEffect(() => {
@@ -151,6 +153,10 @@ export default function PlayTone() {
         console.log("All sounds loaded");
       };
 
+      //Get room name
+      var name = await getRoomName(roomId);
+      setRoomName(name);
+
       await loadAllSounds();
     }
 
@@ -174,13 +180,48 @@ export default function PlayTone() {
     updataSequencerData(roomId, newJson);
   }
 
+  async function handleQRCodeClick() {
+    setQrCodeUrl(await generateQRCode());
+  }
+
   return (
     <>
-      <div className="py-8" />
+      <div className="flex justify-center mt-4">
+        <div className="">
+          <div className="inline-block font-serif font-bold text-center text-2xl md:text-3xl">
+            {roomName}
+          </div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                onClick={handleQRCodeClick}
+                className="h-10 w-10 ml-4"
+              >
+                <QrCodeIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px]">
+              {qrCodeUrl && (
+                <img src={qrCodeUrl} alt="QR Code" className="mt-1" />
+              )}
+              <div className="">
+                <a
+                  href={window.location.href}
+                  className="underline text-sm text-ellipsis"
+                >
+                  {window.location.href}
+                </a>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
       {dataLoaded ? (
         <>
-          <div className="p-4 justify-center items-center w-srceen">
-            <div className="p-2 border rounded-xl flex max-w-[963px]">
+          <div className="p-2 md:p-4 flex justify-center">
+            <div className="p-2 border rounded-xl flex max-w-[963px] overflow-hidden">
               <div className="inline mr-2">
                 <div className="flex flex-col h-full gap-2">
                   {Object.keys(players).map((key) => (
@@ -221,7 +262,7 @@ export default function PlayTone() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center items-center mt-8">
+          <div className="flex flex-col justify-center items-center mt-2">
             <div>
               <Button
                 onClick={handleClick}
@@ -231,25 +272,12 @@ export default function PlayTone() {
                 {playing ? <PauseIcon /> : <PlayArrowIcon />}
               </Button>
             </div>
-
-            <div className="flex flex-col items-center mt-8">
-              <button
-                onClick={handleQR}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg mb-4"
-              >
-                Generate QR Code
-              </button>
-
-              {qrCodeUrl && (
-                <img src={qrCodeUrl} alt="QR Code" className="mt-4" />
-              )}
-            </div>
           </div>
         </>
       ) : (
         <div className="p-4">
-          <div className="p-2 border rounded-xl flex justify-center items-center w-[963px] h-[274px]">
-            <Spinner />
+          <div className="p-2 border rounded-xl flex max-w-[963px] h-[274px] justify-center items-center">
+            <Spinner width={6} height={6} />
           </div>
         </div>
       )}

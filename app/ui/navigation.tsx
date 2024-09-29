@@ -32,7 +32,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0 md:content-center ">
               <a href="/" className="text-xl font-bold no-underline font-serif">
-                {"Online Jam"}
+                {"Let's Jam"}
               </a>
             </div>
             <div className="hidden md:ml-6 md:flex md:space-x-8">
@@ -86,7 +86,7 @@ const Navbar = () => {
                         <div className="text-2xl">Content</div>
                       </DrawerTitle>
                       <DrawerDescription>
-                        Navigate to different sections of the blog.
+                        Navigate to different sections.
                       </DrawerDescription>
                     </DrawerHeader>
                     <div className="px-16 md:px-4">
@@ -97,7 +97,7 @@ const Navbar = () => {
                       <a href="/" className={drawerOptionStyle}>
                         Home
                       </a>
-                      <a href="/music" className={drawerOptionStyle}>
+                      {/* <a href="/music" className={drawerOptionStyle}>
                         Music
                       </a>
                       <a href="/coding" className={drawerOptionStyle}>
@@ -108,7 +108,7 @@ const Navbar = () => {
                       </a>
                       <a href="/blog" className={drawerOptionStyle}>
                         Blogs
-                      </a>
+                      </a> */}
                     </div>
                     <DrawerFooter>
                       <div className="pt-4 w-full"></div>
