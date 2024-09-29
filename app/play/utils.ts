@@ -69,6 +69,20 @@ export async function getRoomName(roomId: string): Promise<any> {
   }
 }
 
+export async function updateLastTime(roomId: string) {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ last_time: new Date() })
+    .eq("room", roomId)
+    .select();
+
+  if (error) {
+    console.error("Error updating row:", error);
+  } else {
+    console.log("Row updated:", data);
+  }
+}
+
 export async function generateQRCode(url: string): Promise<any> {
   const currentUrl = url; // Get the current webpage URL
   try {

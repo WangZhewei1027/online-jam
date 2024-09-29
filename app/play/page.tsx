@@ -14,6 +14,7 @@ import {
   updataSequencerData,
   getRoomName,
   generateQRCode,
+  updateLastTime,
 } from "./utils";
 import {
   Popover,
@@ -111,6 +112,8 @@ export default function PlayTone() {
       // Get the room ID from the URL
       const roomId = getRoomId();
       setRoomId(roomId);
+
+      updateLastTime(roomId);
 
       // Fetch the sequencer data from the database
       var data = await fetchSequencerData(roomId);

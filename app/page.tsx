@@ -31,7 +31,14 @@ export default function Index() {
   async function createRoom(roomName: string) {
     const { data, error } = await supabase
       .from("notes")
-      .insert([{ name: roomName, sequencer: sequencerData }])
+      .insert([
+        {
+          name: roomName,
+          sequencer: sequencerData,
+          create_time: new Date(),
+          last_time: new Date(),
+        },
+      ])
       .select();
     if (data) {
       console.log(data[0].room);
