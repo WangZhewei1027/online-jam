@@ -207,12 +207,14 @@ export default function PlayTone() {
                 <img src={qrCodeUrl} alt="QR Code" className="mt-1" />
               )}
               <div className="">
-                <a
-                  href={window.location.href}
-                  className="underline text-sm text-ellipsis"
-                >
-                  {window.location.href}
-                </a>
+                {window.location.href && (
+                  <a
+                    href={window.location.href}
+                    className="underline text-sm text-ellipsis"
+                  >
+                    {window.location.href}
+                  </a>
+                )}
               </div>
             </PopoverContent>
           </Popover>
