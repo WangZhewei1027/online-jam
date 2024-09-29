@@ -1,33 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
-import QRCode from "qrcode";
+import React, { useState, useEffect } from "react";
+import { getRoomId } from "../play/utils";
+import { fetchSequencerData } from "../play/utils";
+const Page = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-const QRCodeComponent = () => {
-  const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
+  useEffect(() => {
+    async function init() {
+      const roomId = getRoomId();
 
-  const handleClick = async () => {
-    const currentUrl = window.location.href; // Get the current webpage URL
-    try {
-      const qrCode = await QRCode.toDataURL(currentUrl); // Generate QR code as Data URL
-      setQrCodeUrl(qrCode); // Set the generated QR code to the state
-    } catch (error) {
-      console.error("Error generating QR code:", error);
+      var data = await fetchSequencerData(roomId);
+      setData(data);
+      setLoading(false);
     }
-  };
+
+    init();
+  }, []);
 
   return (
-    <div className="flex flex-col items-center mt-8">
-      <button
-        onClick={handleClick}
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg mb-4"
-      >
-        Generate QR Code
-      </button>
+    <div className="border-red-500 border">
+      <div className="inline-block  border-blue-500 border m-4 p-4 overflow-x-scroll">
+        <div className="inline-block w-10 h-full">
+          {Object.keys([1, 2, 3, 4]).map((key) => (
+            <div
+              className="flex justify-center items-center px-2 py-5 font-serif"
+              key={key}
+            >
+              {key.charAt(0).toUpperCase() + key.slice(1)}
+            </div>
+          ))}
+        </div>
 
-      {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" className="mt-4" />}
+        <div className="flex flex-col flex-shrink-[2]">
+          <div className="grid grid-rows-4 grid-flow-col">
+            {[...Array(64)].map((_, index) => (
+              <div key={index} className="w-10 h-20 bg-slate-600 m-1">
+                a
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-red-600 w-10 h-40"></div>
+      </div>
     </div>
   );
 };
 
-export default QRCodeComponent;
+export default Page;

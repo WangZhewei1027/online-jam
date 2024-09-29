@@ -7,6 +7,7 @@ import { GeistSans } from "geist/font/sans";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
 import "./globals.css";
+import Navbar from "./ui/navigation";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -32,9 +33,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="min-h-screen">
-                {children}
-          </main>
+          <Navbar />
+          <div className="pt-16"></div>
+          <main className="min-h-[calc(100vh-4rem)]">{children}</main>
         </ThemeProvider>
       </body>
     </html>

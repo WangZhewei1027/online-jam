@@ -8,6 +8,7 @@ import Spinner from "@/components/ui/spinner";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import QRCode from "qrcode";
+import { getRoomId, fetchSequencerData, updataSequencerData } from "./utils";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -57,7 +58,7 @@ const Switch: React.FC<SwitchProps> = ({
   return (
     <div
       id="switch"
-      className={`flex items-center justify-center ${enabled ? "bg-green-500" : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-12 h-14 hover:border-2 rounded-lg`}
+      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-12 h-14 hover:border-2 rounded-lg`}
       onMouseDown={toggleSwitch}
     ></div>
   );
@@ -71,14 +72,9 @@ export default function PlayTone() {
   const [clock, setClock] = useState(-1);
   const [players, setPlayers] = useState<{ [key: string]: Tone.Player }>({});
   const [playing, setPlaying] = useState(false);
-  const [json, setData] = useState<{ [key: string]: number[] }>({
-    kick: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    hihat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    snare: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    crash: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  });
+  const [json, setData] = useState<{ [key: string]: number[] }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [room, setRoom] = useState("");
+  const [roomId, setRoomId] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
 
   const handleQR = async () => {
@@ -90,23 +86,6 @@ export default function PlayTone() {
       console.error("Error generating QR code:", error);
     }
   };
-
-  // Preload the sounds once using Tone.js
-  useEffect(() => {
-    const loadAllSounds = async () => {
-      var players: { [key: string]: Tone.Player } = {};
-
-      sounds.forEach((sound) => {
-        players[sound] = new Tone.Player(`/drum/${sound}.wav`).toDestination();
-      });
-
-      setPlayers(players);
-
-      console.log("All sounds loaded");
-    };
-
-    loadAllSounds();
-  }, []);
 
   // Clock signal
   useEffect(() => {
@@ -125,91 +104,63 @@ export default function PlayTone() {
 
   //initialize the data
   useEffect(() => {
-    const getUrl = async () => {
-      const queryString = window.location.search;
-      const params = new URLSearchParams(queryString);
-      const room = params.get("room");
+    async function init() {
+      // Get the room ID from the URL
+      const roomId = getRoomId();
+      setRoomId(roomId);
 
-      if (room) {
-        setRoom(room); // This triggers an asynchronous state update
-        console.log(room);
-      }
-    };
+      // Fetch the sequencer data from the database
+      var data = await fetchSequencerData(roomId);
+      console.log(data);
 
-    getUrl();
-  }, []); // This runs only on component mount to get the room from the URL
+      // Set the sequencer data to the state
+      setData(data[0].sequencer);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (room) {
-        // Ensure that fetchData only runs when room is available
-        const { data, error } = await supabase
-          .from("notes")
-          .select("*")
-          .eq("room", room);
+      // Set data loaded to true, so that the UI can be rendered
+      setDataLoaded(true);
 
-        if (error) {
-          console.log("error", error);
-        } else if (data) {
-          setDataLoaded(true);
-          setData(data[0].data);
-          console.log(data[0].data);
-        }
-      }
-    };
+      // Subscribe to changes in the database
+      const channel = supabase
+        .channel("schema-db-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notes",
+            filter: `room=eq.${roomId}`,
+          },
+          (payload) => {
+            setData(payload.new.sequencer);
+          }
+        )
+        .subscribe();
 
-    fetchData();
-  }, [room]); // This runs whenever 'room' changes
+      //Load all sounds
+      const loadAllSounds = async () => {
+        var players: { [key: string]: Tone.Player } = {};
 
-  //listen to the database changes
-  useEffect(() => {
-    if (!room) {
-      return;
+        sounds.forEach((sound) => {
+          players[sound] = new Tone.Player(
+            `/drum/${sound}.wav`
+          ).toDestination();
+        });
+
+        setPlayers(players);
+
+        console.log("All sounds loaded");
+      };
+
+      await loadAllSounds();
     }
-    const channel = supabase
-      .channel("schema-db-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notes",
-          filter: `room=eq.${room}`,
-        },
-        (payload) => {
-          // Convert the payload to a string and set it as data
-          //console.log(payload.new.data);
-          setData(payload.new.data);
-          console.log("Data updated");
-          console.log(payload.new.data);
-        }
-      )
-      .subscribe();
 
-    // Cleanup subscription on component unmount
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [room]);
+    init();
+  }, []);
 
   function handleClick() {
     Tone.start();
     setPlaying(!playing);
     console.log("Playing: " + playing);
-  }
-
-  async function updateData(newJson: { [key: string]: number[] }) {
-    const { data, error } = await supabase
-      .from("notes")
-      .update({ data: newJson })
-      .eq("room", room)
-      .select();
-
-    if (error) {
-      console.error("Error updating row:", error);
-    } else {
-      console.log("Row updated:", data);
-    }
   }
 
   function handleToggle(instrument: string, index: number, change: boolean) {
@@ -220,52 +171,63 @@ export default function PlayTone() {
     }
     console.log(newJson);
     setData(newJson);
-    updateData(newJson);
+    updataSequencerData(roomId, newJson);
   }
 
   return (
     <>
+      <div className="py-8" />
       {dataLoaded ? (
-        <div className="p-2">
-          <div className="flex flex-row items-center justify-center">
-            <div className="flex flex-col h-full">
-              {Object.keys(players).map((key) => (
-                <div
-                  className="flex justify-center items-center px-2 py-5 font-serif"
-                  key={key}
-                >
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
+        <>
+          <div className="p-4 justify-center items-center w-srceen">
+            <div className="p-2 border rounded-xl flex max-w-[963px]">
+              <div className="inline mr-2">
+                <div className="flex flex-col h-full gap-2">
+                  {Object.keys(players).map((key) => (
+                    <div
+                      className="flex justify-center items-center font-serif h-full"
+                      key={key}
+                    >
+                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            <div className="grid grid-rows-4 grid-flow-col overflow-x-auto">
-              {[...Array(64)].map((_, index) => (
-                <div
-                  className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-1`}
-                >
-                  <Switch
-                    key={index} // Add a key to avoid React warning
-                    name={sounds[index % sounds.length]}
-                    clock={clock}
-                    index={Math.floor(index / sounds.length)}
-                    player={players[sounds[index % sounds.length]]} // Pass down preloaded Tone.Players
-                    change={
-                      json !== null && Object.keys(json).length > 0
-                        ? json[sounds[index % sounds.length]][
-                            Math.floor(index / sounds.length)
-                          ] === 1
-                        : false
-                    }
-                    onToggle={handleToggle}
-                  />
+              </div>
+              <div className="inline-block overflow-x-scroll">
+                <div className="grid grid-rows-4 grid-flow-col">
+                  {[...Array(64)].map((_, index) => (
+                    <div
+                      key={index}
+                      className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-1`}
+                    >
+                      <Switch
+                        name={sounds[index % sounds.length]}
+                        clock={clock}
+                        index={Math.floor(index / sounds.length)}
+                        player={players[sounds[index % sounds.length]]} // Pass down preloaded Tone.Players
+                        change={
+                          json !== null && Object.keys(json).length > 0
+                            ? json[sounds[index % sounds.length]][
+                                Math.floor(index / sounds.length)
+                              ] === 1
+                            : false
+                        }
+                        onToggle={handleToggle}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
+
           <div className="flex flex-col justify-center items-center mt-8">
             <div>
-              <Button onClick={handleClick} className="w-16 h-16">
+              <Button
+                onClick={handleClick}
+                className="w-16 h-16"
+                variant="outline"
+              >
                 {playing ? <PauseIcon /> : <PlayArrowIcon />}
               </Button>
             </div>
@@ -283,10 +245,12 @@ export default function PlayTone() {
               )}
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <div className={"flex justify-center items-center mt-32"}>
-          <Spinner />
+        <div className="p-4">
+          <div className="p-2 border rounded-xl flex justify-center items-center w-[963px] h-[274px]">
+            <Spinner />
+          </div>
         </div>
       )}
     </>
