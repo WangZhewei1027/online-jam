@@ -72,12 +72,12 @@ export default function Index() {
               htmlFor="roomName"
               className="block text-sm font-medium mb-1 pl-1"
             >
-              Room Name
+              Enter Room Name
             </label>
             <Input
               id="roomName"
               className="w-full"
-              placeholder="Enter room name"
+              placeholder="Untitled Room"
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
             />
