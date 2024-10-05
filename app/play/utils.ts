@@ -92,3 +92,45 @@ export async function generateQRCode(url: string): Promise<any> {
     console.error("Error generating QR code:", error);
   }
 }
+
+export async function updateClockStartTime(roomId: string) {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ clock_start_time: new Date() })
+    .eq("room", roomId)
+    .select();
+
+  if (error) {
+    console.error("Error updating row:", error);
+  } else {
+    console.log("Row updated:", data);
+  }
+}
+
+export async function updateNumBeatWhenStart(roomId: string, beat: number) {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ num_beat_when_start: beat })
+    .eq("room", roomId)
+    .select();
+
+  if (error) {
+    console.error("Error updating row:", error);
+  } else {
+    console.log("Row updated:", data);
+  }
+}
+
+export async function updateBpm(roomId: string, bpm: number) {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ bpm: bpm })
+    .eq("room", roomId)
+    .select();
+
+  if (error) {
+    console.error("Error updating row:", error);
+  } else {
+    console.log("Row updated:", data);
+  }
+}

@@ -15,11 +15,13 @@ import {
   getRoomId,
   updateLastTime,
 } from "./utils";
+import Metronome from "./metronome";
 
 export default function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
   const [roomName, setRoomName] = useState("");
   const [url, setUrl] = useState("");
+  const [roomId, setRoomId] = useState("");
 
   async function handleQRCodeClick() {
     setQrCodeUrl(await generateQRCode(window.location.href));
@@ -30,12 +32,13 @@ export default function Page() {
     async function init() {
       // Get the room ID from the URL
       const roomId = getRoomId();
+      setRoomId(roomId);
 
       //Get room name
       var name = await getRoomName(roomId);
       setRoomName(name);
 
-      updateLastTime(roomId);
+      await updateLastTime(roomId);
     }
 
     init();
@@ -73,6 +76,7 @@ export default function Page() {
         </div>
       </div>
       <Sequencer />
+      <Metronome roomId={roomId} />
     </>
   );
 }
