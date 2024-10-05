@@ -13,16 +13,12 @@ export default function Metronome({ roomId }: { roomId: string }) {
     const delayInterval = Date.now() % interval; // Delay to sync with the beat
     var metronomeInterval: NodeJS.Timeout;
     var delay: NodeJS.Timeout;
-    if (delayInterval < 100) {
-      const delay = setTimeout(() => {
-        metronomeInterval = setInterval(() => {
-          setIsFlashing(true);
-          const audio = new Audio("/click.mp3"); // Path to your metronome sound
-          audio.play();
-          setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
-        }, interval);
-      }, delayInterval); // Add a delay to sync with the beat
-    }
+    metronomeInterval = setInterval(() => {
+      setIsFlashing(true);
+      const audio = new Audio("/click.mp3"); // Path to your metronome sound
+      audio.play();
+      setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
+    }, interval);
 
     // Update BPM in the database
     updateBpm(roomId, bpm);
