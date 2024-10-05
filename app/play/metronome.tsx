@@ -7,42 +7,76 @@ import { updateBpm } from "./utils";
 export default function Metronome({ roomId }: { roomId: string }) {
   const [bpm, setBpm] = useState(120); // default BPM is 120
   const [isFlashing, setIsFlashing] = useState(false);
-  const lastTimeRef = useRef<number>(performance.now()); // Track the last time a tick occurred
-  const requestIdRef = useRef<number | null>(null); // Store requestAnimationFrame ID
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const nextNoteTimeRef = useRef<number>(0); // The time for the next click
+  const lookAhead = 0.1; // How far ahead to schedule (in seconds)
+  const scheduleAheadTime = 0.1; // How far ahead to schedule audio events
 
-  const interval = 60000 / bpm; // Calculate the interval based on the BPM
+  const interval = 60 / bpm; // Calculate the interval (in seconds)
 
-  // Function to play the metronome sound and trigger flash
-  const playMetronome = () => {
-    setIsFlashing(true);
-    const audio = new Audio("/click.mp3"); // Path to your metronome sound
-    audio.play();
-    setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
+  // Function to play the "click" sound using Web Audio API
+  const playClick = (time: number) => {
+    if (!audioContextRef.current) return;
+
+    const osc = audioContextRef.current.createOscillator();
+    const gainNode = audioContextRef.current.createGain();
+
+    osc.frequency.value = 1000; // Frequency of the "click"
+    gainNode.gain.setValueAtTime(1, time);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+
+    osc.connect(gainNode).connect(audioContextRef.current.destination);
+    osc.start(time);
+    osc.stop(time + 0.05);
   };
 
-  // Function to handle the ticking logic using requestAnimationFrame
-  const tick = (currentTime: number) => {
-    const delta = currentTime - lastTimeRef.current; // Time since the last tick
-    if (delta >= interval) {
-      playMetronome();
-      lastTimeRef.current = currentTime; // Update the last time a tick occurred
+  // Scheduler function that schedules clicks in advance
+  const schedule = () => {
+    if (!audioContextRef.current) return;
+
+    while (
+      nextNoteTimeRef.current <
+      audioContextRef.current.currentTime + scheduleAheadTime
+    ) {
+      playClick(nextNoteTimeRef.current); // Schedule the click
+      setIsFlashing(true); // Flash for UI feedback
+      setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
+      nextNoteTimeRef.current += interval; // Move to the next beat
     }
-    requestIdRef.current = requestAnimationFrame(tick); // Schedule the next frame
+
+    setTimeout(schedule, lookAhead * 1000); // Check every 100ms
   };
 
-  // Use effect to handle the start/stop of the metronome
+  // Start the metronome
+  const startMetronome = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+
+    nextNoteTimeRef.current = audioContextRef.current.currentTime; // Set the first note time
+    schedule(); // Start scheduling clicks
+    setIsPlaying(true);
+  };
+
+  // Stop the metronome
+  const stopMetronome = () => {
+    setIsPlaying(false);
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+  };
+
+  // Update BPM and restart scheduling if the metronome is playing
   useEffect(() => {
-    lastTimeRef.current = performance.now(); // Reset the timer
-    requestIdRef.current = requestAnimationFrame(tick); // Start the ticking
+    if (isPlaying) {
+      stopMetronome();
+      startMetronome();
+    }
 
     // Update BPM in the database
     updateBpm(roomId, bpm);
-
-    return () => {
-      if (requestIdRef.current) {
-        cancelAnimationFrame(requestIdRef.current); // Stop the metronome on cleanup
-      }
-    };
   }, [bpm]);
 
   const increaseBpm = () => {
@@ -63,6 +97,11 @@ export default function Metronome({ roomId }: { roomId: string }) {
           <Button onClick={decreaseBpm}>-</Button>
           <span className="text-2xl mx-6">{bpm} BPM</span>
           <Button onClick={increaseBpm}>+</Button>
+        </div>
+        <div className="flex items-center justify-center mb-4">
+          <Button onClick={isPlaying ? stopMetronome : startMetronome}>
+            {isPlaying ? "Stop" : "Start"}
+          </Button>
         </div>
         <div className="flex items-center justify-center">
           <div
