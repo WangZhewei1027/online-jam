@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { updateBpm } from "./utils";
+import { updateBpm, updateMetronome } from "../utils";
 
 export default function Metronome({ roomId }: { roomId: string }) {
   const [bpm, setBpm] = useState(120); // default BPM is 120
@@ -28,6 +28,7 @@ export default function Metronome({ roomId }: { roomId: string }) {
 
     osc.connect(gainNode).connect(audioContextRef.current.destination);
     osc.start(time);
+    console.log(time);
     osc.stop(time + 0.05);
   };
 
@@ -57,11 +58,13 @@ export default function Metronome({ roomId }: { roomId: string }) {
     nextNoteTimeRef.current = audioContextRef.current.currentTime; // Set the first note time
     schedule(); // Start scheduling clicks
     setIsPlaying(true);
+    updateMetronome(roomId, true);
   };
 
   // Stop the metronome
   const stopMetronome = () => {
     setIsPlaying(false);
+    updateMetronome(roomId, false);
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -76,7 +79,9 @@ export default function Metronome({ roomId }: { roomId: string }) {
     }
 
     // Update BPM in the database
-    updateBpm(roomId, bpm);
+    if (roomId) {
+      updateBpm(roomId, bpm);
+    }
   }, [bpm]);
 
   const increaseBpm = () => {

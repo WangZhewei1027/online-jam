@@ -59,7 +59,7 @@ export default function Index() {
     setCreatingRoom(false);
 
     // Redirect to the room page
-    window.location.href = "/play?room=" + roomId;
+    window.location.href = "/hoster?room=" + roomId;
   }
 
   return (

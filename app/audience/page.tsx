@@ -1,6 +1,5 @@
 "use client";
 
-import Sequencer from "./sequencer";
 import {
   Popover,
   PopoverContent,
@@ -14,8 +13,8 @@ import {
   getRoomName,
   getRoomId,
   updateLastTime,
-} from "./utils";
-import Metronome from "./metronome";
+} from "@/app/utils";
+import Metronome from "./metronome_auidence";
 
 export default function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
@@ -37,8 +36,6 @@ export default function Page() {
       //Get room name
       var name = await getRoomName(roomId);
       setRoomName(name);
-
-      await updateLastTime(roomId);
     }
 
     init();
@@ -75,7 +72,6 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-      <Sequencer />
       <Metronome roomId={roomId} />
     </>
   );

@@ -134,3 +134,17 @@ export async function updateBpm(roomId: string, bpm: number) {
     console.log("Row updated:", data);
   }
 }
+
+export async function updateMetronome(roomId: string, isPlaying: boolean) {
+  const { data, error } = await supabase
+    .from("notes")
+    .update({ metronome: isPlaying, clock_start_time: new Date() })
+    .eq("room", roomId)
+    .select();
+
+  if (error) {
+    console.error("Error updating row:", error);
+  } else {
+    console.log("Row updated:", data);
+  }
+}

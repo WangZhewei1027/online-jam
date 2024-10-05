@@ -12,7 +12,7 @@ import {
   fetchSequencerData,
   updataSequencerData,
   updateLastTime,
-} from "./utils";
+} from "../utils";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
