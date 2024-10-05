@@ -1,31 +1,47 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { updateBpm } from "./utils";
 
 export default function Metronome({ roomId }: { roomId: string }) {
   const [bpm, setBpm] = useState(120); // default BPM is 120
   const [isFlashing, setIsFlashing] = useState(false);
+  const lastTimeRef = useRef<number>(performance.now()); // Track the last time a tick occurred
+  const requestIdRef = useRef<number | null>(null); // Store requestAnimationFrame ID
 
+  const interval = 60000 / bpm; // Calculate the interval based on the BPM
+
+  // Function to play the metronome sound and trigger flash
+  const playMetronome = () => {
+    setIsFlashing(true);
+    const audio = new Audio("/click.mp3"); // Path to your metronome sound
+    audio.play();
+    setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
+  };
+
+  // Function to handle the ticking logic using requestAnimationFrame
+  const tick = (currentTime: number) => {
+    const delta = currentTime - lastTimeRef.current; // Time since the last tick
+    if (delta >= interval) {
+      playMetronome();
+      lastTimeRef.current = currentTime; // Update the last time a tick occurred
+    }
+    requestIdRef.current = requestAnimationFrame(tick); // Schedule the next frame
+  };
+
+  // Use effect to handle the start/stop of the metronome
   useEffect(() => {
-    const interval = 60000 / bpm; // Calculate interval based on BPM
-    const delayInterval = Date.now() % interval; // Delay to sync with the beat
-    var metronomeInterval: NodeJS.Timeout;
-    var delay: NodeJS.Timeout;
-    metronomeInterval = setInterval(() => {
-      setIsFlashing(true);
-      const audio = new Audio("/click.mp3"); // Path to your metronome sound
-      audio.play();
-      setTimeout(() => setIsFlashing(false), 100); // Flash for a short time
-    }, interval);
+    lastTimeRef.current = performance.now(); // Reset the timer
+    requestIdRef.current = requestAnimationFrame(tick); // Start the ticking
 
     // Update BPM in the database
     updateBpm(roomId, bpm);
 
     return () => {
-      clearInterval(metronomeInterval);
-      clearTimeout(delay);
+      if (requestIdRef.current) {
+        cancelAnimationFrame(requestIdRef.current); // Stop the metronome on cleanup
+      }
     };
   }, [bpm]);
 
