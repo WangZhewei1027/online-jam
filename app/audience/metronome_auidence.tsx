@@ -108,6 +108,24 @@ export default function Metronome({ roomId }: { roomId: string }) {
   }, [roomId]);
 
   useEffect(() => {
+    const startBackgroundSound = () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new window.AudioContext();
+      }
+
+      const osc = audioContextRef.current.createOscillator(); // 创建振荡器
+      const gainNode = audioContextRef.current.createGain(); // 创建增益节点来控制音量
+
+      osc.frequency.value = 20; // 设置为非常低的频率，例如 20 Hz
+      gainNode.gain.value = 0.0001; // 设置非常低的音量，几乎不可听到
+
+      osc.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination); // 连接到音频输出
+
+      osc.start(0); // 开始振荡器
+      osc.stop(999999999999999);
+    };
+    startBackgroundSound();
     setInterval(() => {
       audioContextRef.current?.resume();
       console.log("Resumed");
