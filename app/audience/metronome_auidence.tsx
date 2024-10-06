@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { updateBpm } from "../utils";
 import { createClient } from "@supabase/supabase-js";
+import { init } from "next/dist/compiled/webpack/webpack";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -20,39 +21,6 @@ export default function Metronome({ roomId }: { roomId: string }) {
   const scheduleAheadTime = 0.1; // How far ahead to schedule audio events
 
   const interval = 60 / bpm; // Calculate the interval (in seconds)
-
-  const channel = supabase
-    .channel("schema-db-changes")
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "notes",
-        filter: `room=eq.${roomId}`,
-      },
-      (payload) => {
-        console.log("Received update:", payload.new.clock_start_time);
-        setIsPlaying(payload.new.metronome);
-        if (payload.new.metronome) {
-          let interval = (60 / bpm) * 1000;
-          const date = new Date(payload.new.clock_start_time);
-          const milliseconds = date.getTime();
-          console.log("Latency:", Date.now() - milliseconds);
-          let timeout = interval - ((Date.now() - milliseconds) % interval);
-          console.log("Timeout:", timeout);
-          setTimeout(() => {
-            stopMetronome();
-            startMetronome();
-          }, timeout);
-        } else {
-          stopMetronome();
-        }
-      }
-    )
-    .subscribe();
-
-  async function handleStartMetronome() {}
 
   // Function to play the "click" sound using Web Audio API
   const playClick = (time: number) => {
@@ -116,7 +84,45 @@ export default function Metronome({ roomId }: { roomId: string }) {
     }
   }, [bpm]);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notes",
+          filter: `room=eq.${roomId}`,
+        },
+        (payload) => {
+          console.log("Received update:", payload);
+          handlePayload(payload);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomId]);
+
+  async function handlePayload(payload: any) {
+    setIsPlaying(payload.new.metronome);
+    if (payload.new.metronome) {
+      let interval = (60 / bpm) * 1000;
+      const date = new Date(payload.new.clock_start_time);
+      const milliseconds = date.getTime();
+      console.log("Latency:", Date.now() - milliseconds);
+      let timeout = interval - ((Date.now() - milliseconds) % interval);
+      console.log("Timeout:", timeout);
+      setTimeout(() => {
+        stopMetronome();
+        startMetronome();
+      }, timeout);
+    } else {
+      stopMetronome();
+    }
+  }
 
   const increaseBpm = () => {
     setBpm((prevBpm) => (prevBpm < 300 ? prevBpm + 1 : prevBpm)); // Prevent going over 300

@@ -19,7 +19,7 @@ export default function Page() {
           event: "UPDATE",
           schema: "public",
           table: "notes",
-          filter: "id=eq.4",
+          filter: "room=eq.2ef090a1-d620-44ef-99b8-24eb65b79131",
         },
         (payload) => {
           // Convert the payload to a string and set it as data
