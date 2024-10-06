@@ -1,6 +1,6 @@
 "use client";
 
-import Sequencer from "./sequencer";
+import Sequencer from "@/app/ui/sequencer";
 import {
   Popover,
   PopoverContent,
@@ -22,6 +22,7 @@ export default function Page() {
   const [roomName, setRoomName] = useState("");
   const [url, setUrl] = useState("");
   const [roomId, setRoomId] = useState("");
+  const [bpm, setBpm] = useState(120);
 
   async function handleQRCodeClick() {
     var tempUrl = window.location.href.replace("hoster", "audience");
@@ -44,6 +45,10 @@ export default function Page() {
 
     init();
   }, []);
+
+  function handleCallback(bpm: number) {
+    setBpm(bpm);
+  }
 
   return (
     <>
@@ -76,8 +81,8 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-      <Sequencer />
-      <Metronome roomId={roomId} />
+      <Sequencer hoster={true} bpm={bpm} />
+      <Metronome roomId={roomId} setBpmCallback={handleCallback} />
     </>
   );
 }

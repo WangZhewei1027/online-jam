@@ -2,9 +2,15 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { updateBpm, updateMetronome } from "../utils";
+import { updateBpm, updateMetronome, updateClockStartTime } from "../utils";
 
-export default function Metronome({ roomId }: { roomId: string }) {
+export default function Metronome({
+  roomId,
+  setBpmCallback,
+}: {
+  roomId: string;
+  setBpmCallback: (bpm: number) => void;
+}) {
   const [bpm, setBpm] = useState(120); // default BPM is 120
   const [isFlashing, setIsFlashing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -80,8 +86,11 @@ export default function Metronome({ roomId }: { roomId: string }) {
 
     // Update BPM in the database
     if (roomId) {
-      updateBpm(roomId, bpm);
+      //updateBpm(roomId, bpm);
     }
+
+    // Call the callback function with the new BPM
+    setBpmCallback(bpm);
   }, [bpm]);
 
   const increaseBpm = () => {

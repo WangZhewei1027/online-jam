@@ -68,9 +68,14 @@ const Switch: React.FC<SwitchProps> = ({
   );
 };
 
-export default function Sequencer() {
+export default function Sequencer({
+  hoster,
+  bpm,
+}: {
+  hoster: boolean;
+  bpm: number;
+}) {
   const maxClock = 16;
-  const clockInterval = 200;
   const sounds = ["kick", "snare", "hihat", "crash"];
 
   const [clock, setClock] = useState(-1);
@@ -79,6 +84,7 @@ export default function Sequencer() {
   const [json, setData] = useState<{ [key: string]: number[] }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
   const [roomId, setRoomId] = useState("");
+  const [clockInterval, setClockInterval] = useState(200);
 
   // Clock signal
   useEffect(() => {
@@ -88,12 +94,13 @@ export default function Sequencer() {
       }
       setClock((prev) => (prev + 1) % maxClock);
       console.log("Clock: " + clock);
-    }, clockInterval);
+    }, 30000 / bpm);
 
+    console.log("Clock interval: " + 30000 / bpm);
     return () => {
       clearInterval(intervalId); // Cleanup interval on component unmount
     };
-  }, [playing]);
+  }, [playing, bpm]);
 
   //initialize the data
   useEffect(() => {
@@ -215,17 +222,19 @@ export default function Sequencer() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center items-center mt-2">
-            <div>
-              <Button
-                onClick={handleClick}
-                className="w-16 h-16"
-                variant="outline"
-              >
-                {playing ? <PauseIcon /> : <PlayArrowIcon />}
-              </Button>
+          {hoster && (
+            <div className="flex flex-col justify-center items-center mt-2">
+              <div>
+                <Button
+                  onClick={handleClick}
+                  className="w-16 h-16"
+                  variant="outline"
+                >
+                  {playing ? <PauseIcon /> : <PlayArrowIcon />}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </>
       ) : (
         <div className="p-2 md:p-4 flex justify-center">
