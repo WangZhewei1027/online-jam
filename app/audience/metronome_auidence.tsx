@@ -5,6 +5,17 @@ import { Button } from "@/components/ui/button";
 import { updateBpm } from "../utils";
 import { createClient } from "@supabase/supabase-js";
 import { init } from "next/dist/compiled/webpack/webpack";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -20,6 +31,7 @@ export default function Metronome({ roomId }: { roomId: string }) {
   const lookAhead = 0.1; // How far ahead to schedule (in seconds)
   const scheduleAheadTime = 0.1; // How far ahead to schedule audio events
   const [audioEnabled, setAudioEnabled] = useState(false); // Track if AudioContext is enabled
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const interval = 60 / bpm; // Calculate the interval (in seconds)
 
@@ -118,25 +130,25 @@ export default function Metronome({ roomId }: { roomId: string }) {
     }
   };
 
-  // Function to show alert and initialize AudioContext
-  const requestAudioPermission = () => {
-    const userConfirmed = window.confirm(
-      "This app requires audio permission. Click OK to enable audio."
-    );
-    if (userConfirmed) {
-      initializeAudioContext(); // Initialize AudioContext if user confirmed
-      alert("Audio has been enabled. Enjoy!");
-    } else {
-      alert("Audio permission denied. The app may not function correctly.");
-    }
-  };
+  // // Function to show alert and initialize AudioContext
+  // const requestAudioPermission = () => {
+  //   const userConfirmed = window.confirm(
+  //     "This app requires audio permission. Click OK to enable audio."
+  //   );
+  //   if (userConfirmed) {
+  //     initializeAudioContext(); // Initialize AudioContext if user confirmed
+  //     alert("Audio has been enabled. Enjoy!");
+  //   } else {
+  //     alert("Audio permission denied. The app may not function correctly.");
+  //   }
+  // };
 
-  // Trigger the alert window when the component is first mounted
-  useEffect(() => {
-    if (!audioEnabled) {
-      requestAudioPermission(); // Only show alert if audio has not been enabled yet
-    }
-  }, [audioEnabled]);
+  // // Trigger the alert window when the component is first mounted
+  // useEffect(() => {
+  //   if (!audioEnabled) {
+  //     requestAudioPermission(); // Only show alert if audio has not been enabled yet
+  //   }
+  // }, [audioEnabled]);
 
   async function handlePayload(payload: any) {
     setIsPlaying(payload.new.metronome);
@@ -164,23 +176,53 @@ export default function Metronome({ roomId }: { roomId: string }) {
     setBpm((prevBpm) => (prevBpm > 40 ? prevBpm - 1 : prevBpm)); // Prevent going below 40
   };
 
+  useEffect(() => {
+    setIsDialogOpen(true); // Set to true to open the dialog on page load
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center mt-8">
-      <div className="block border p-4 w-[300px] rounded-lg">
-        <h1 className="text-2xl font-bold mb-4 font-serif text-center">
-          Metronome
-        </h1>
-        <div className="flex items-center justify-center mb-4">
-          <span className="text-2xl mx-6">{bpm} BPM</span>
-        </div>
-        <div className="flex items-center justify-center">
-          <div
-            className={`w-12 h-12 rounded-full ${
-              isFlashing ? "bg-red-500" : "bg-gray-300"
-            } transition-all`}
-          ></div>
+    <>
+      <AlertDialog open={isDialogOpen}>
+        <AlertDialogTrigger asChild></AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable Audio Play</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enable audio play to use the app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {/* <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel> */}
+            <AlertDialogAction
+              onClick={() => {
+                initializeAudioContext();
+                setIsDialogOpen(false);
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="flex flex-col items-center justify-center mt-8">
+        <div className="block border p-4 w-[300px] rounded-lg">
+          <h1 className="text-2xl font-bold mb-4 font-serif text-center">
+            Metronome
+          </h1>
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-2xl mx-6">{bpm} BPM</span>
+          </div>
+          <div className="flex items-center justify-center">
+            <div
+              className={`w-12 h-12 rounded-full ${
+                isFlashing ? "bg-red-500" : "bg-gray-300"
+              } transition-all`}
+            ></div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
