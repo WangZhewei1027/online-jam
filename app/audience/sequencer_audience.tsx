@@ -45,14 +45,14 @@ const Switch: React.FC<SwitchProps> = ({
   };
 
   useEffect(() => {
-    if (clock === index && enabled) {
-      if (player.loaded) {
-        if (player.state === "started") {
-          player.stop();
-        }
-        player.start();
-      }
-    }
+    // if (clock === index && enabled) {
+    //   if (player.loaded) {
+    //     if (player.state === "started") {
+    //       player.stop();
+    //     }
+    //     player.start();
+    //   }
+    // }
   }, [clock]);
 
   useEffect(() => {
@@ -151,12 +151,6 @@ export default function Sequencer() {
 
     init();
   }, []);
-
-  function handleClick() {
-    Tone.start();
-    setPlaying(!playing);
-    console.log("Playing: " + playing);
-  }
 
   function handleToggle(instrument: string, index: number, change: boolean) {
     console.log(instrument, index, change);
