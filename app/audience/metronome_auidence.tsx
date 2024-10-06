@@ -58,9 +58,11 @@ export default function Metronome({ roomId }: { roomId: string }) {
   };
 
   // Start the metronome
-  const startMetronome = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
+  const startMetronome = async () => {
+    if (!audioContextRef.current) return;
+
+    if (audioContextRef.current.state === "suspended") {
+      await audioContextRef.current.resume(); // Resume AudioContext if suspended
     }
 
     nextNoteTimeRef.current = audioContextRef.current.currentTime; // Set the first note time
@@ -69,11 +71,10 @@ export default function Metronome({ roomId }: { roomId: string }) {
   };
 
   // Stop the metronome
-  const stopMetronome = () => {
+  const stopMetronome = async () => {
     setIsPlaying(false);
     if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+      await audioContextRef.current.suspend(); // Suspend instead of closing
     }
   };
 
@@ -111,7 +112,7 @@ export default function Metronome({ roomId }: { roomId: string }) {
   // Function to initialize AudioContext
   const initializeAudioContext = () => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new window.AudioContext();
+      audioContextRef.current = new AudioContext();
       console.log("AudioContext initialized");
       setAudioEnabled(true); // Mark AudioContext as enabled
     }
@@ -136,32 +137,6 @@ export default function Metronome({ roomId }: { roomId: string }) {
       requestAudioPermission(); // Only show alert if audio has not been enabled yet
     }
   }, [audioEnabled]);
-
-  useEffect(() => {
-    const startBackgroundSound = () => {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new window.AudioContext();
-      }
-
-      const osc = audioContextRef.current.createOscillator(); // 创建振荡器
-      const gainNode = audioContextRef.current.createGain(); // 创建增益节点来控制音量
-
-      osc.frequency.value = 20; // 设置为非常低的频率，例如 20 Hz
-      gainNode.gain.value = 0.0001; // 设置非常低的音量，几乎不可听到
-
-      osc.connect(gainNode);
-      gainNode.connect(audioContextRef.current.destination); // 连接到音频输出
-
-      osc.start(); // 开始振荡器
-      osc.stop(audioContextRef.current.currentTime + 0.1); // 1 秒后停止振荡器
-    };
-    startBackgroundSound();
-    setInterval(() => {
-      audioContextRef.current?.resume();
-      startBackgroundSound();
-      console.log("Resumed");
-    }, 500);
-  }, []);
 
   async function handlePayload(payload: any) {
     setIsPlaying(payload.new.metronome);
@@ -196,15 +171,8 @@ export default function Metronome({ roomId }: { roomId: string }) {
           Metronome
         </h1>
         <div className="flex items-center justify-center mb-4">
-          {/* <Button onClick={decreaseBpm}>-</Button> */}
           <span className="text-2xl mx-6">{bpm} BPM</span>
-          {/* <Button onClick={increaseBpm}>+</Button> */}
         </div>
-        {/* <div className="flex items-center justify-center mb-4">
-          <Button onClick={isPlaying ? stopMetronome : startMetronome}>
-            {isPlaying ? "Stop" : "Start"}
-          </Button>
-        </div> */}
         <div className="flex items-center justify-center">
           <div
             className={`w-12 h-12 rounded-full ${
