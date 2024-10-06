@@ -19,6 +19,7 @@ export default function Metronome({ roomId }: { roomId: string }) {
   const nextNoteTimeRef = useRef<number>(0); // The time for the next click
   const lookAhead = 0.1; // How far ahead to schedule (in seconds)
   const scheduleAheadTime = 0.1; // How far ahead to schedule audio events
+  const [audioEnabled, setAudioEnabled] = useState(false); // Track if AudioContext is enabled
 
   const interval = 60 / bpm; // Calculate the interval (in seconds)
 
@@ -107,6 +108,35 @@ export default function Metronome({ roomId }: { roomId: string }) {
     };
   }, [roomId]);
 
+  // Function to initialize AudioContext
+  const initializeAudioContext = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new window.AudioContext();
+      console.log("AudioContext initialized");
+      setAudioEnabled(true); // Mark AudioContext as enabled
+    }
+  };
+
+  // Function to show alert and initialize AudioContext
+  const requestAudioPermission = () => {
+    const userConfirmed = window.confirm(
+      "This app requires audio permission. Click OK to enable audio."
+    );
+    if (userConfirmed) {
+      initializeAudioContext(); // Initialize AudioContext if user confirmed
+      alert("Audio has been enabled. Enjoy!");
+    } else {
+      alert("Audio permission denied. The app may not function correctly.");
+    }
+  };
+
+  // Trigger the alert window when the component is first mounted
+  useEffect(() => {
+    if (!audioEnabled) {
+      requestAudioPermission(); // Only show alert if audio has not been enabled yet
+    }
+  }, [audioEnabled]);
+
   useEffect(() => {
     const startBackgroundSound = () => {
       if (!audioContextRef.current) {
@@ -122,12 +152,13 @@ export default function Metronome({ roomId }: { roomId: string }) {
       osc.connect(gainNode);
       gainNode.connect(audioContextRef.current.destination); // 连接到音频输出
 
-      osc.start(0); // 开始振荡器
-      osc.stop(999999999999999);
+      osc.start(); // 开始振荡器
+      osc.stop(audioContextRef.current.currentTime + 0.1); // 1 秒后停止振荡器
     };
     startBackgroundSound();
     setInterval(() => {
       audioContextRef.current?.resume();
+      startBackgroundSound();
       console.log("Resumed");
     }, 500);
   }, []);

@@ -76,7 +76,7 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-      {/* <Sequencer /> */}
+      <Sequencer />
       <Metronome roomId={roomId} />
     </>
   );

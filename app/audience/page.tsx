@@ -15,6 +15,7 @@ import {
   updateLastTime,
 } from "@/app/utils";
 import Metronome from "./metronome_auidence";
+import Sequencer from "./sequencer_audience";
 
 export default function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
@@ -72,6 +73,7 @@ export default function Page() {
           </Popover>
         </div>
       </div>
+      <Sequencer />
       <Metronome roomId={roomId} />
     </>
   );
