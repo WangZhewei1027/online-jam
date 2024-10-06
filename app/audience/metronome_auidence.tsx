@@ -101,10 +101,18 @@ export default function Metronome({ roomId }: { roomId: string }) {
         }
       )
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, [roomId]);
+
+  useEffect(() => {
+    setInterval(() => {
+      audioContextRef.current?.resume();
+      console.log("Resumed");
+    }, 500);
+  }, []);
 
   async function handlePayload(payload: any) {
     setIsPlaying(payload.new.metronome);
