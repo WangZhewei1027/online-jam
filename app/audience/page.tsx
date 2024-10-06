@@ -73,7 +73,7 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-      <Sequencer hoster={false} />
+      <Sequencer hoster={false} bpm={120} />
     </>
   );
 }
