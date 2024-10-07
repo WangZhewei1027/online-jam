@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { updateBpm, updateMetronome, updateClockStartTime } from "../utils";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 
 export default function Metronome({
   roomId,
@@ -101,6 +104,10 @@ export default function Metronome({
     setBpm((prevBpm) => (prevBpm > 40 ? prevBpm - 1 : prevBpm)); // Prevent going below 40
   };
 
+  const handleSliderChange = (value: number[]) => {
+    setBpm(value[0]);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center mt-8">
       <div className="block border p-4 w-[300px] rounded-lg">
@@ -112,9 +119,18 @@ export default function Metronome({
           <span className="text-2xl mx-6">{bpm} BPM</span>
           <Button onClick={increaseBpm}>+</Button>
         </div>
+        <div className="flex items-center justify-center my-8 px-4">
+          <Slider
+            value={[bpm]} // Slider accepts an array of values
+            min={40} // Minimum BPM
+            max={300} // Maximum BPM
+            step={1} // Step size
+            onValueChange={handleSliderChange} // Update BPM on change
+          />
+        </div>
         <div className="flex items-center justify-center mb-4">
           <Button onClick={isPlaying ? stopMetronome : startMetronome}>
-            {isPlaying ? "Stop" : "Start"}
+            {isPlaying ? <VolumeOffIcon /> : <VolumeUpIcon />}
           </Button>
         </div>
         <div className="flex items-center justify-center">

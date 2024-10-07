@@ -144,7 +144,7 @@ export default function Sequencer({
 
         sounds.forEach((sound) => {
           players[sound] = new Tone.Player(
-            `/drum/${sound}.wav`
+            `/drum212/${sound}.mp3`
           ).toDestination();
         });
 
