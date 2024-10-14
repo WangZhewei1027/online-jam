@@ -39,6 +39,8 @@ import NumberInput from "./nodes/NumberInput";
 import Destination from "./nodes/Destination";
 import Analyser from "./nodes/Analyser";
 import Sequencer from "./nodes/Sequencer";
+import MIDIInput from "./nodes/MIDIInput";
+import Value from "./nodes/Value";
 
 import { MdOutlineCloudDone } from "react-icons/md";
 import Spinner from "@/components/ui/spinner";
@@ -52,6 +54,8 @@ const nodeTypes = {
   destination: Destination,
   analyser: Analyser,
   sequencer: Sequencer,
+  midiinput: MIDIInput,
+  value: Value,
 };
 
 const initialNodes: Node[] = []; // 这里指定 Node 类型
@@ -221,6 +225,26 @@ export default function Page() {
     setNodes((nds) => [...nds, newNode]);
   };
 
+  const addMIDIInput = () => {
+    const newNode = {
+      id: nanoid(),
+      type: "midiinput",
+      position: { x: Math.random() * 200, y: Math.random() * 200 },
+      data: { label: "MIDI Input" },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  const addValue = () => {
+    const newNode = {
+      id: nanoid(),
+      type: "value",
+      position: { x: Math.random() * 200, y: Math.random() * 200 },
+      data: { label: "Value" },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
   const onNodesChange = useCallback(
     (changes: NodeChange<Node>[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -302,6 +326,12 @@ export default function Page() {
             </div>
             <div className="flex space-x-4 m-2">
               <Button onClick={addSequencer}>New Sequencer</Button>
+            </div>
+            <div className="flex space-x-4 m-2">
+              <Button onClick={addMIDIInput}>New MIDI Input</Button>
+            </div>
+            <div className="flex space-x-4 m-2">
+              <Button onClick={addValue}>New Value</Button>
             </div>
           </div>
 
