@@ -62,7 +62,7 @@ const Switch: React.FC<SwitchProps> = ({
   return (
     <div
       id="switch"
-      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-12 h-14 hover:border-2 rounded-lg`}
+      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-6 h-7 hover:border-2 rounded-sm`}
       onMouseDown={toggleSwitch}
     ></div>
   );
@@ -180,13 +180,13 @@ export default function Sequencer({
     <>
       {dataLoaded ? (
         <>
-          <div className="p-2 md:p-4 flex justify-center">
-            <div className="p-2 border rounded-xl flex max-w-[963px] overflow-hidden">
+          <div className="flex justify-center">
+            <div className="nodrag p-2 rounded-sm flex max-w-[963px] overflow-hidden">
               <div className="inline mr-2">
                 <div className="flex flex-col h-full gap-2">
                   {Object.keys(players).map((key) => (
                     <div
-                      className="flex justify-center items-center font-serif h-full"
+                      className="flex justify-center items-center font-serif h-full text-[10px]"
                       key={key}
                     >
                       {key.charAt(0).toUpperCase() + key.slice(1)}
@@ -199,7 +199,7 @@ export default function Sequencer({
                   {[...Array(64)].map((_, index) => (
                     <div
                       key={index}
-                      className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-1`}
+                      className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-[2px]`}
                     >
                       <Switch
                         name={sounds[index % sounds.length]}
@@ -223,11 +223,11 @@ export default function Sequencer({
           </div>
 
           {hoster && (
-            <div className="flex flex-col justify-center items-center mt-2">
+            <div className="flex flex-col justify-center items-center">
               <div>
                 <Button
                   onClick={handleClick}
-                  className="w-16 h-16"
+                  className="nodrag w-8 h-8 mb-2"
                   variant="outline"
                 >
                   {playing ? <PauseIcon /> : <PlayArrowIcon />}
@@ -238,7 +238,7 @@ export default function Sequencer({
         </>
       ) : (
         <div className="p-2 md:p-4 flex justify-center">
-          <div className="p-2 border rounded-xl flex w-[963px] h-[274px] justify-center items-center">
+          <div className="p-2 border rounded-sm flex w-[963px] h-[274px] justify-center items-center">
             <Spinner width={6} height={6} />
           </div>
         </div>

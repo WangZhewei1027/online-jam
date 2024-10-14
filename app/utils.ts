@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
+import { NodeProps } from "@xyflow/react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -79,7 +80,7 @@ export async function updateLastTime(roomId: string) {
   if (error) {
     console.error("Error updating row:", error);
   } else {
-    console.log("Row updated:", data);
+    //console.log("Row updated:", data);
   }
 }
 
@@ -147,4 +148,52 @@ export async function updateMetronome(roomId: string, isPlaying: boolean) {
   } else {
     console.log("Row updated:", data);
   }
+}
+
+export async function fetchNodesAndEdges(roomId: string): Promise<any> {
+  if (roomId) {
+    const { data, error } = await supabase
+      .from("notes")
+      .select("nodes, edges")
+      .eq("room", roomId);
+
+    if (error) {
+      throw new Error("Error fetching nodes and edges");
+    } else if (data) {
+      return data;
+    }
+  } else {
+    throw new Error("roomId is required");
+  }
+}
+
+export async function updateNodesAndEdges(
+  roomId: string,
+  newNodes: any[],
+  newEdges: any[]
+): Promise<any> {
+  if (!roomId) {
+    throw new Error("roomId is required");
+  }
+
+  // 移除 nodes 中的 component 字段
+  newNodes.map((node) => {
+    const { component, ...rest } = node.data;
+    node.data = rest; // 更新 node.data 字段
+  });
+
+  // 更新数据库
+  const { data, error } = await supabase
+    .from("notes")
+    .update({
+      nodes: newNodes, // 更新去除 component 字段后的 nodes 列
+      edges: newEdges, // 更新去除 component 字段后的 edges 列
+    })
+    .eq("room", roomId); // 确保更新的是指定 roomId 的记录
+
+  if (error) {
+    throw new Error("Error updating nodes and edges");
+  }
+
+  return data; // 返回更新后的数据
 }

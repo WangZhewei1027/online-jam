@@ -1,5 +1,6 @@
 "use client";
 
+import * as Tone from "tone";
 import {
   Popover,
   PopoverContent,
@@ -73,7 +74,7 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-      <Sequencer hoster={false} bpm={120} />
+      <Sequencer hoster={false} bpm={120} tone={Tone} />
     </>
   );
 }
