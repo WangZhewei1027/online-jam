@@ -41,6 +41,7 @@ import Analyser from "./nodes/Analyser";
 import Sequencer from "./nodes/Sequencer";
 import MIDIInput from "./nodes/MIDIInput";
 import Value from "./nodes/Value";
+import GainNode from "./nodes/GainNode";
 
 import { MdOutlineCloudDone } from "react-icons/md";
 import Spinner from "@/components/ui/spinner";
@@ -56,6 +57,7 @@ const nodeTypes = {
   sequencer: Sequencer,
   midiinput: MIDIInput,
   value: Value,
+  gainNode: GainNode,
 };
 
 const initialNodes: Node[] = []; // 这里指定 Node 类型
@@ -153,8 +155,8 @@ export default function Page() {
       setSave(true);
       setTimeout(() => {
         setSave(false);
-      }, 30000);
-    }, 5000);
+      }, 3000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [roomId]);
@@ -241,6 +243,16 @@ export default function Page() {
       type: "value",
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Value" },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  const addGainNode = () => {
+    const newNode = {
+      id: nanoid(),
+      type: "gainNode",
+      position: { x: Math.random() * 200, y: Math.random() * 200 },
+      data: { label: "Gain Node" },
     };
     setNodes((nds) => [...nds, newNode]);
   };
@@ -332,6 +344,9 @@ export default function Page() {
             </div>
             <div className="flex space-x-4 m-2">
               <Button onClick={addValue}>New Value</Button>
+            </div>
+            <div className="flex space-x-4 m-2">
+              <Button onClick={addGainNode}>New Gain Node</Button>
             </div>
           </div>
 

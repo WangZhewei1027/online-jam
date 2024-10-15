@@ -38,7 +38,6 @@ function Oscillator({
   // 使用 useEffect 在组件挂载时创建 oscillator
   useEffect(() => {
     const osc = new Tone.Oscillator(frequency > 0 ? frequency : 0, "sine");
-    osc.volume.value = -20;
     oscRef.current = osc;
     updateNodeData(id, { component: osc });
 

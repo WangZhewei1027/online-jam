@@ -146,6 +146,7 @@ export default function Sequencer({
           players[sound] = new Tone.Player(
             `/drum212/${sound}.mp3`
           ).toDestination();
+          players[sound].volume.value = -10;
         });
 
         setPlayers(players);

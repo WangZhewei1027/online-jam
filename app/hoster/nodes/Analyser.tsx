@@ -6,6 +6,7 @@ import {
   NodeProps,
   useHandleConnections,
   useNodesData,
+  useReactFlow,
 } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
@@ -24,6 +25,8 @@ const Analyser = ({
   isConnectable,
   selected,
 }: AnalyserProps & { data: { label: string } }) => {
+  const { updateNodeData } = useReactFlow();
+
   // 获取与 destination 的连接
   const connections = useHandleConnections({
     type: "target",
@@ -46,6 +49,9 @@ const Analyser = ({
   const analyserRef = useRef<Tone.Analyser>(
     new Tone.Analyser("waveform", 1024)
   );
+
+  // Store the waveform value in a ref to prevent re-render
+  const valueRef = useRef<number | null>(null);
 
   useEffect(() => {
     const startAudio = async () => {
@@ -124,24 +130,23 @@ const Analyser = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.beginPath();
-      // ctx.moveTo(0, canvas.height / 2);
-      // for (let i = audioRef.current.length - 1; i > 0; i--) {
-      //   audioRef.current[i] = audioRef.current[i - 1];
-      // }
-      // audioRef.current[0] = waveform[0];
-      // for (let i = 0; i < audioRef.current.length; i++) {
-      //   const x = (i / audioRef.current.length) * canvas.width;
-      //   const y = ((1 + audioRef.current[i]) * canvas.height) / 2;
-      //   ctx.lineTo(x, y);
-      // }
-      for (let i = 0; i < waveform.length; i++) {
-        const x = (i / waveform.length) * canvas.width;
-        const y = ((1 + (waveform[i] as number)) * canvas.height) / 2;
+      ctx.moveTo(0, canvas.height / 2);
+      for (let i = audioRef.current.length - 1; i > 0; i--) {
+        audioRef.current[i] = audioRef.current[i - 1];
+      }
+      audioRef.current[0] = waveform[0];
+      for (let i = 0; i < audioRef.current.length; i++) {
+        const x = (i / audioRef.current.length) * canvas.width;
+        const y = ((1 + audioRef.current[i]) * canvas.height) / 2;
         ctx.lineTo(x, y);
       }
+
       ctx.strokeStyle = "#000";
       ctx.lineWidth = 1;
       ctx.stroke();
+
+      // Update valueRef instead of triggering a re-render
+      valueRef.current = waveform[0] as number;
     };
 
     drawWaveform();
@@ -154,11 +159,23 @@ const Analyser = ({
     };
   }, [canvasRef.current]);
 
+  // Throttle or debounce the updateNodeData to prevent frequent React updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (valueRef.current !== null) {
+        updateNodeData(id, { value: valueRef.current });
+      }
+    }, 100); // Update every 500ms
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [id, updateNodeData]);
+
   return (
     <div
       className={`my-node ${selected ? "my-node-selected" : ""} w-[200px] h-[100px]`}
     >
       <TargetHandle type="target" position={Position.Left} id="destination" />
+      <Handle type="source" position={Position.Right} />
       <canvas ref={canvasRef} className="oscilloscope w-full h-full" />
       <div className="my-label">{label}</div>
     </div>
