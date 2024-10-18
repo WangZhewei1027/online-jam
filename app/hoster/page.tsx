@@ -29,6 +29,8 @@ import {
   Edge,
   NodeChange,
   EdgeChange,
+  reconnectEdge,
+  Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { nanoid } from "nanoid";
@@ -78,6 +80,8 @@ export default function Page() {
 
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
+
+  const edgeReconnectSuccessful = useRef(true);
 
   async function handleQRCodeClick() {
     var tempUrl = window.location.href.replace("hoster", "audience");
@@ -271,6 +275,23 @@ export default function Page() {
     []
   );
 
+  const onReconnectStart = useCallback(() => {
+    edgeReconnectSuccessful.current = false;
+  }, []);
+
+  const onReconnect = useCallback((oldEdge: any, newConnection: Connection) => {
+    edgeReconnectSuccessful.current = true;
+    setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
+  }, []);
+
+  const onReconnectEnd = useCallback((_: any, edge: { id: string }) => {
+    if (!edgeReconnectSuccessful.current) {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    }
+
+    edgeReconnectSuccessful.current = true;
+  }, []);
+
   return (
     <>
       <div className="flex justify-center mt-4">
@@ -368,6 +389,9 @@ export default function Page() {
               onConnect={onConnect}
               nodeTypes={nodeTypes}
               proOptions={{ hideAttribution: true }}
+              onReconnect={onReconnect}
+              onReconnectStart={onReconnectStart}
+              onReconnectEnd={onReconnectEnd}
               fitView
             >
               <Background />

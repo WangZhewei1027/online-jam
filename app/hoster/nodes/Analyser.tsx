@@ -165,7 +165,7 @@ const Analyser = ({
       if (valueRef.current !== null) {
         updateNodeData(id, { value: valueRef.current });
       }
-    }, 100); // Update every 500ms
+    }, 50); // Update every 500ms
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [id, updateNodeData]);

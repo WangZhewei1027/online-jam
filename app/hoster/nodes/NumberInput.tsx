@@ -13,13 +13,15 @@ function NumberInput({
   const [number, setNumber] = useState<number>(value);
 
   const onChange = useCallback((evt: any) => {
-    setNumber(evt.target.value);
-    updateNodeData(id, { value: evt.target.value });
+    // 检查输入值是否为空，如果为空，则设置为 0
+    const newValue = evt.target.value;
+    setNumber(newValue);
+    updateNodeData(id, { value: newValue === "" ? 0 : newValue });
+    console.log("NumberInput onChange", newValue);
   }, []);
 
   return (
     <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
-      {/* <div>{data.label as string}</div> */}
       <input
         id={`number-${id}`}
         name="number"
