@@ -9,6 +9,10 @@
     @apply absolute left-0 -top-3 text-[8px]
 }
 
+.my-menu{
+  @apply bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded block w-full
+}
+
 @keyframes border-glow {
     0% {
       box-shadow: 0 0 15px 5px rgba(255, 105, 180, 0.6), 0 0 30px 10px rgba(255, 105, 180, 0.3);

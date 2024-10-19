@@ -44,11 +44,13 @@ import Sequencer from "./nodes/Sequencer";
 import MIDIInput from "./nodes/MIDIInput";
 import Value from "./nodes/Value";
 import GainNode from "./nodes/GainNode";
+import Envelope from "./nodes/Envelope";
 
 import { MdOutlineCloudDone } from "react-icons/md";
 import Spinner from "@/components/ui/spinner";
-import { HiOutlineSpeakerWave } from "react-icons/hi2";
-import { HiOutlineSpeakerXMark } from "react-icons/hi2";
+import { MdArrowForwardIos } from "react-icons/md";
+import { MdOutlineUndo } from "react-icons/md";
+import { MdOutlineRedo } from "react-icons/md";
 
 const nodeTypes = {
   oscillator: Oscillator,
@@ -60,6 +62,7 @@ const nodeTypes = {
   midiinput: MIDIInput,
   value: Value,
   gainNode: GainNode,
+  envelope: Envelope,
 };
 
 const initialNodes: Node[] = []; // 这里指定 Node 类型
@@ -80,6 +83,17 @@ export default function Page() {
 
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
+
+  const undoStack = useRef<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  const redoStack = useRef<{ nodes: Node[]; edges: Edge[] }[]>([]);
+
+  const saveStateToUndoStack = (currentNodes: Node[], currentEdges: Edge[]) => {
+    undoStack.current = [
+      ...undoStack.current,
+      { nodes: currentNodes, edges: currentEdges },
+    ];
+    redoStack.current = []; // Clear redo stack on new actions
+  };
 
   const edgeReconnectSuccessful = useRef(true);
 
@@ -129,24 +143,55 @@ export default function Page() {
 
       display();
     }
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Mac: Command + S
+      // Detect platform (Mac or others)
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+
+      // Save with Command + S (Mac) or Ctrl + S (Windows)
       if (
-        (isMac && event.metaKey && event.key === "s") ||
-        (!isMac && event.ctrlKey && event.key === "s")
+        (isMac && event.metaKey && event.key.toLowerCase() === "s") ||
+        (!isMac && event.ctrlKey && event.key.toLowerCase() === "s")
       ) {
-        event.preventDefault(); // 阻止默认的保存行为
+        event.preventDefault(); // Prevent default browser save
         console.log("Command+S or Ctrl+S was pressed");
-        // 在这里执行你希望的逻辑
         update();
+      }
+
+      // Undo with Command + Z (Mac) or Ctrl + Z (Windows)
+      if (
+        (isMac &&
+          event.metaKey &&
+          event.key.toLowerCase() === "z" &&
+          !event.shiftKey) ||
+        (!isMac &&
+          event.ctrlKey &&
+          event.key.toLowerCase() === "z" &&
+          !event.shiftKey)
+      ) {
+        event.preventDefault(); // Prevent default undo behavior
+        console.log("Undo triggered");
+        undo(); // Call your undo function here
+      }
+
+      // Redo with Command + Shift + Z (Mac) or Ctrl + Y (Windows)
+      if (
+        (isMac &&
+          event.metaKey &&
+          event.key.toLowerCase() === "z" &&
+          event.shiftKey) ||
+        (!isMac && event.ctrlKey && event.key.toLowerCase() === "y")
+      ) {
+        event.preventDefault(); // Prevent default redo behavior
+        console.log("Redo triggered");
+        redo(); // Call your redo function here
       }
     };
 
-    // 监听键盘事件
+    // Listen to keydown events
     window.addEventListener("keydown", handleKeyDown);
 
-    // 清理函数
+    // Cleanup function
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timeout);
@@ -261,14 +306,63 @@ export default function Page() {
     setNodes((nds) => [...nds, newNode]);
   };
 
+  const addEnvelope = () => {
+    const newNode = {
+      id: nanoid(),
+      type: "envelope",
+      position: { x: Math.random() * 200, y: Math.random() * 200 },
+      data: { label: "Envelope" },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
   const onNodesChange = useCallback(
-    (changes: NodeChange<Node>[]) =>
-      setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
+    (changes: NodeChange<Node>[]) => {
+      const updatedNodes = applyNodeChanges(changes, nodes);
+      saveStateToUndoStack(nodes, edges);
+      setNodes(updatedNodes);
+    },
+    [nodes, edges]
   );
-  const onEdgesChange = useCallback((changes: EdgeChange<Edge>[]) => {
-    setEdges((eds) => applyEdgeChanges(changes, eds));
-  }, []);
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<Edge>[]) => {
+      const updatedEdges = applyEdgeChanges(changes, edges);
+      saveStateToUndoStack(nodes, edges);
+      setEdges(updatedEdges);
+    },
+    [edges]
+  );
+
+  // Undo action
+  const undo = () => {
+    if (undoStack.current.length > 0) {
+      const previousState = undoStack.current.pop();
+      if (previousState) {
+        redoStack.current = [
+          ...redoStack.current,
+          { nodes: previousState.nodes, edges: previousState.edges },
+        ];
+        setNodes(previousState.nodes);
+        setEdges(previousState.edges);
+      }
+    }
+  };
+
+  // Redo action
+  const redo = () => {
+    if (redoStack.current.length > 0) {
+      const nextState = redoStack.current.pop();
+      if (nextState) {
+        undoStack.current = [
+          ...undoStack.current,
+          { nodes: nextState.nodes, edges: nextState.edges },
+        ];
+        setNodes(nextState.nodes);
+        setEdges(nextState.edges);
+      }
+    }
+  };
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -291,6 +385,39 @@ export default function Page() {
 
     edgeReconnectSuccessful.current = true;
   }, []);
+
+  const menuItems = [
+    {
+      label: "Oscillators",
+      actions: [
+        { label: "New Oscillator", onClick: addOscillator },
+        { label: "New Sequencer", onClick: addSequencer },
+      ],
+    },
+    {
+      label: "Inputs",
+      actions: [
+        { label: "New Number Input", onClick: addNumberInput },
+        { label: "New MIDI Input", onClick: addMIDIInput },
+        { label: "New Value", onClick: addValue },
+      ],
+    },
+    {
+      label: "Visuals",
+      actions: [
+        { label: "New RGBLight", onClick: addRGBLight },
+        { label: "New Analyser", onClick: addAnalyser },
+      ],
+    },
+    {
+      label: "Audio",
+      actions: [
+        { label: "New Gain Node", onClick: addGainNode },
+        { label: "New Destination", onClick: addDestination },
+        { label: "New Envelope", onClick: addEnvelope },
+      ],
+    },
+  ];
 
   return (
     <>
@@ -341,34 +468,48 @@ export default function Page() {
       {init ? (
         <>
           {/* Tool Bar */}
-          <div className="tool-bar absolute top-20 left-4 p-2 border z-10">
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addOscillator}>New Oscillator</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addRGBLight}>New RGBLight</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addNumberInput}>New Number Input</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addDestination}>New Destination</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addAnalyser}>New Analyser</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addSequencer}>New Sequencer</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addMIDIInput}>New MIDI Input</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addValue}>New Value</Button>
-            </div>
-            <div className="flex space-x-4 m-2">
-              <Button onClick={addGainNode}>New Gain Node</Button>
-            </div>
+          <div className="tool-bar absolute top-20 left-4 p-2 z-10">
+            {menuItems.map((menu, index) => (
+              <div
+                key={index}
+                className="group relative ease-in-out transition-all mt-2"
+              >
+                <Button className="w-full">{menu.label}</Button>
+                <ul className="absolute left-full top-0 opacity-0 hidden group-hover:flex group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300 flex-row z-10">
+                  <MdArrowForwardIos className="mt-3 mx-1" />
+                  <div className="flex flex-col items-center space-y-2">
+                    {menu.actions.map((action, i) => (
+                      <Button
+                        key={i}
+                        variant={"outline"}
+                        className="w-full inline"
+                        onClick={action.onClick}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Undo Redo */}
+          <div className="absolute top-20 right-4 p-2 z-10 space-x-2">
+            <Button
+              variant={"outline"}
+              onClick={undo}
+              className="w-10 h-10 p-2"
+            >
+              <MdOutlineUndo className="w-full h-full" />
+            </Button>
+            <Button
+              variant={"outline"}
+              onClick={redo}
+              className="w-10 h-10 p-2"
+            >
+              <MdOutlineRedo className="w-full h-full" />
+            </Button>
           </div>
 
           {/* Canvas */}
@@ -392,6 +533,8 @@ export default function Page() {
               onReconnect={onReconnect}
               onReconnectStart={onReconnectStart}
               onReconnectEnd={onReconnectEnd}
+              panOnScroll={true}
+              zoomOnScroll={false}
               fitView
             >
               <Background />
