@@ -12,6 +12,16 @@ import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
 
+import { useStore, StoreState } from "../store";
+import { shallow } from "zustand/shallow";
+const selector = (store: StoreState) => ({
+  nodes: store.nodes,
+  edges: store.edges,
+  useHandleConnections: store.useHandleConnections,
+  useNodesData: store.useNodesData,
+  updateNode: store.updateNode,
+});
+
 interface GainNodeProps extends NodeProps {
   data: {
     label: string;
@@ -24,43 +34,33 @@ const GainNode = ({
   isConnectable,
   selected,
 }: GainNodeProps) => {
-  const { updateNodeData } = useReactFlow();
+  const store = useStore(selector, shallow);
 
-  const audioInputConnections = useHandleConnections({
-    type: "target",
-    id: "audio",
-  });
+  const audioInputConnections = store.useHandleConnections(
+    id,
+    "target",
+    "audio"
+  );
+  const audioInputSourceId = audioInputConnections?.[0]?.source;
+  console.log("audioInputSourceId", audioInputSourceId);
+  const audioInputSourceHandleId = audioInputConnections?.[0]?.sourceHandle;
+  const audioInputNodeData = store.useNodesData(audioInputSourceId || "");
+  console.log("audioInputNodeData", audioInputNodeData);
+  const audioInputComponent = audioInputNodeData?.component;
+  const audioComponent: Tone.ToneAudioNode | null = audioInputComponent;
+  const audioComponentRef = useRef<Tone.ToneAudioNode | null>(audioComponent);
+  console.log("audioComponent", audioComponent);
 
-  const gainValueConnections = useHandleConnections({
-    type: "target",
-    id: "gain",
-  });
+  const gainValueConnections = store.useHandleConnections(id, "target", "gain");
+  const gainValueSourceId = gainValueConnections?.[0]?.source;
+  console.log("gainValueSourceId", gainValueSourceId);
+  const gainValueSourceHandleId = gainValueConnections?.[0]?.sourceHandle;
+  const gainValueNodeData = store.useNodesData(gainValueSourceId || "");
+  console.log("gainValueNodeData", gainValueNodeData);
+  const gainValue = gainValueNodeData?.value || 1;
+  console.log("gainValue", gainValue);
 
-  const audioSourceId =
-    audioInputConnections.length > 0 ? audioInputConnections[0].source : null;
-  const gainSourceId =
-    gainValueConnections.length > 0 ? gainValueConnections[0].source : null;
-
-  const audioNodeData = useNodesData(audioSourceId || "");
-  const gainNodeData = useNodesData(gainSourceId || "");
-
-  const gainRef = useRef<Tone.Gain | null>(null);
-
-  const gainValue = gainNodeData?.data?.value
-    ? (gainNodeData.data.value as number)
-    : 1;
-
-  const audioComponent: Tone.ToneAudioNode | null =
-    audioSourceId && audioNodeData?.data?.component
-      ? (audioNodeData.data.component as Tone.ToneAudioNode)
-      : null;
-
-  const gainInputComponent =
-    gainSourceId && gainNodeData?.data?.component
-      ? (gainNodeData.data.component as Tone.ToneAudioNode)
-      : null;
-
-  const audioComponentRef = useRef<Tone.ToneAudioNode | null>(null);
+  const gainRef = useRef<Tone.Gain | null>(new Tone.Gain(gainValue));
 
   useEffect(() => {
     if (!gainRef.current) {
@@ -82,11 +82,11 @@ const GainNode = ({
     }
 
     // Set gain to a static value using rampTo for smooth transitions
-    console.log("Setting gain to", gainValue);
     gainRef.current.gain.rampTo(gainValue, 0.05);
 
-    updateNodeData(id, { component: gainRef.current });
-  }, [audioComponent, gainValue, gainInputComponent]);
+    store.updateNode(id, { component: gainRef.current, value: gainValue });
+    console.log("gain value", gainValue);
+  }, [audioComponent, gainValue]);
 
   useEffect(() => {
     if (audioInputConnections.length < 1 && gainRef.current) {
@@ -102,7 +102,7 @@ const GainNode = ({
         gainRef.current = null;
       }
     };
-  }, []);
+  }, [audioComponentRef.current]);
 
   return (
     <div
