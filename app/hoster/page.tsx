@@ -412,17 +412,15 @@ export default function Page() {
 
   const menuItems = [
     {
-      label: "Oscillators",
-      actions: [
-        { label: "New Oscillator", onClick: addOscillator },
-        { label: "New Sequencer", onClick: addSequencer },
-      ],
-    },
-    {
       label: "Inputs",
       actions: [
         { label: "New Number Input", onClick: addNumberInput },
         { label: "New MIDI Input", onClick: addMIDIInput },
+      ],
+    },
+    {
+      label: "Utils",
+      actions: [
         { label: "New Value", onClick: addValue },
         { label: "New Text", onClick: addText },
         { label: "New QR Code", onClick: addQRCode },
@@ -438,10 +436,15 @@ export default function Page() {
     {
       label: "Audio",
       actions: [
+        { label: "New Oscillator", onClick: addOscillator },
         { label: "New Gain Node", onClick: addGainNode },
         { label: "New Destination", onClick: addDestination },
         { label: "New Envelope", onClick: addEnvelope },
       ],
+    },
+    {
+      label: "Magic",
+      actions: [{ label: "New Sequencer", onClick: addSequencer }],
     },
   ];
 
