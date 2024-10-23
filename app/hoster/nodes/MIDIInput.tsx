@@ -4,13 +4,23 @@ import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import { PiPianoKeys } from "react-icons/pi";
 
+import { useStore, StoreState } from "../store";
+import { shallow } from "zustand/shallow";
+const selector = (store: StoreState) => ({
+  nodes: store.nodes,
+  edges: store.edges,
+  useHandleConnections: store.useHandleConnections,
+  useNodesData: store.useNodesData,
+  updateNode: store.updateNode,
+});
+
 function MIDIInput({
   id,
   data: { label },
   selected,
   ...props
 }: NodeProps & { data: { label: string } }) {
-  const { updateNodeData } = useReactFlow();
+  const store = useStore(selector, shallow);
 
   // 使用 useRef 来避免不必要的重渲染
   const midiAccessRef = useRef<WebMidi.MIDIAccess | null>(null);
@@ -47,7 +57,7 @@ function MIDIInput({
           noteRef.current = note;
           frequencyRef.current = hz;
 
-          updateNodeData(id, { value: hz });
+          store.updateNode(id, { midi: hz, value: hz });
         }
       }
     }
@@ -55,7 +65,7 @@ function MIDIInput({
     function midiToFrequency(midiNote: number) {
       return 440 * Math.pow(2, (midiNote - 69) / 12);
     }
-  }, [id, updateNodeData]);
+  }, [id]);
 
   function onRenderCallback(
     id: any, // the "id" prop of the Profiler tree that has just committed
@@ -75,7 +85,7 @@ function MIDIInput({
     <Profiler id="MIDI Input" onRender={onRenderCallback}>
       <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
         <PiPianoKeys />
-        <Handle type="source" position={Position.Right} />
+        <Handle type="source" position={Position.Right} id="midi" />
         <div className="my-label">{label}</div>
       </div>
     </Profiler>

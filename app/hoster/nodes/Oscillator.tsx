@@ -12,28 +12,31 @@ import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
 
+import { useStore, StoreState } from "../store";
+import { shallow } from "zustand/shallow";
+const selector = (store: StoreState) => ({
+  nodes: store.nodes,
+  edges: store.edges,
+  useHandleConnections: store.useHandleConnections,
+  useNodesData: store.useNodesData,
+  updateNode: store.updateNode,
+});
+
 function Oscillator({
   id,
   data: { label },
   isConnectable,
   selected,
 }: NodeProps & { data: { label: string } }) {
-  // 获取 updateNodeData 方法，用于更新 React Flow 中节点的数据
-  const { updateNodeData } = useReactFlow();
+  const store = useStore(selector, shallow);
 
-  // 获取与 "frequency" 目标端口的连接信息
-  const frequencyConnections = useHandleConnections({
-    type: "target",
-    id: "frequency",
-  });
-
-  // 获取与该连接对应的源节点数据
-  const frequencyNodeData = useNodesData(frequencyConnections?.[0]?.source);
-
-  // 获取频率值，如果没有则默认为 0
-  const frequency: number =
-    (frequencyNodeData?.data.value as number) >= 0
-      ? (frequencyNodeData?.data.value as number)
+  const Connections = store.useHandleConnections(id, "target", "frequency");
+  const sourceId = Connections?.[0]?.source;
+  const sourceHandleId = Connections?.[0]?.sourceHandle;
+  const NodeData = store.useNodesData(sourceId);
+  const frequency =
+    sourceHandleId && NodeData?.[sourceHandleId]
+      ? (NodeData[sourceHandleId] as number)
       : 0;
 
   // 使用 useRef 来存储 Tone.Oscillator 的实例，这样可以避免在重新渲染时重新创建
@@ -51,7 +54,7 @@ function Oscillator({
 
     // 将该振荡器实例存储到 React Flow 的节点数据中，便于其他节点访问
     console.log("Update Oscillator component", oscRef.current);
-    updateNodeData(id, { component: oscRef.current });
+    store.updateNode(id, { component: oscRef.current, value: frequency });
 
     return () => {
       // 清理振荡器，避免内存泄露
@@ -69,6 +72,7 @@ function Oscillator({
   useEffect(() => {
     if (frequency >= 0) {
       console.log("Update Oscillator frequency", frequency);
+      store.updateNode(id, { component: oscRef.current, value: frequency });
       if (!oscRef.current) {
         return;
       }
@@ -112,7 +116,7 @@ function Oscillator({
         </div>
 
         {/* 右侧的 Handle 用于将振荡器输出连接到其他节点 */}
-        <Handle type="source" position={Position.Right} />
+        <Handle type="source" position={Position.Right} id="component" />
 
         {/* 节点标签，显示传入的 label */}
         <div className="my-label">{label}</div>

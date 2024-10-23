@@ -11,7 +11,16 @@ import {
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
-import { HiOutlineSpeakerWave } from "react-icons/hi2";
+
+import { useStore, StoreState } from "../store";
+import { shallow } from "zustand/shallow";
+const selector = (store: StoreState) => ({
+  nodes: store.nodes,
+  edges: store.edges,
+  useHandleConnections: store.useHandleConnections,
+  useNodesData: store.useNodesData,
+  updateNode: store.updateNode,
+});
 
 interface AnalyserProps extends NodeProps {
   data: {
@@ -25,19 +34,11 @@ const Analyser = ({
   isConnectable,
   selected,
 }: AnalyserProps & { data: { label: string } }) => {
-  const { updateNodeData } = useReactFlow();
+  const store = useStore(selector, shallow);
 
-  // 获取与 destination 的连接
-  const connections = useHandleConnections({
-    type: "target",
-    id: "destination",
-  });
-
-  // 确保 connections 存在，并且有一个有效的 source
-  const sourceId = connections.length > 0 ? connections[0].source : null;
-  const componentNodeData = useNodesData(sourceId || "");
-
-  // 确保 componentNodeData 存在并且有 component
+  const connections = store.useHandleConnections(id, "target", "input");
+  const sourceId = connections?.[0]?.source;
+  const componentNodeData = store.useNodesData(sourceId);
   const component: Tone.ToneAudioNode | null =
     sourceId && componentNodeData?.data?.component
       ? (componentNodeData.data.component as Tone.ToneAudioNode)
@@ -60,7 +61,7 @@ const Analyser = ({
         await Tone.start();
 
         // 确保 component 存在后再进行连接操作
-        if (component) {
+        if (component instanceof Tone.ToneAudioNode) {
           component.connect(analyserRef.current);
           componentRef.current = component; // 将 component 存储在 useRef 中
 
@@ -163,19 +164,19 @@ const Analyser = ({
   useEffect(() => {
     const interval = setInterval(() => {
       if (valueRef.current !== null) {
-        updateNodeData(id, { value: valueRef.current });
+        store.updateNode(id, { value: valueRef.current });
       }
     }, 50); // Update every 500ms
 
     return () => clearInterval(interval); // Cleanup on component unmount
-  }, [id, updateNodeData]);
+  }, [id]);
 
   return (
     <div
       className={`my-node ${selected ? "my-node-selected" : ""} w-[200px] h-[100px]`}
     >
-      <TargetHandle type="target" position={Position.Left} id="destination" />
-      <Handle type="source" position={Position.Right} />
+      <TargetHandle type="target" position={Position.Left} id="input" />
+      <Handle type="source" position={Position.Right} id="value" />
       <canvas ref={canvasRef} className="oscilloscope w-full h-full" />
       <div className="my-label">{label}</div>
     </div>

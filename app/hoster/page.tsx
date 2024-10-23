@@ -45,14 +45,30 @@ import MIDIInput from "./nodes/MIDIInput";
 import Value from "./nodes/Value";
 import GainNode from "./nodes/GainNode";
 import Envelope from "./nodes/Envelope";
-import Text from "./nodes/Text";
-import QRCode from "./nodes/QRCode";
 
 import { MdOutlineCloudDone } from "react-icons/md";
 import Spinner from "@/components/ui/spinner";
 import { MdArrowForwardIos } from "react-icons/md";
 import { MdOutlineUndo } from "react-icons/md";
 import { MdOutlineRedo } from "react-icons/md";
+
+import { shallow } from "zustand/shallow";
+import { useStore, StoreState } from "./store";
+
+// 定义 selector 函数的类型
+const selector = (store: StoreState) => ({
+  nodes: store.nodes,
+  edges: store.edges,
+  onNodesChange: store.onNodesChange,
+  onEdgesChange: store.onEdgesChange,
+  addEdge: store.addEdge,
+  addNode: store.addNode,
+  updateNode: store.updateNode,
+  undo: store.undo,
+  redo: store.redo,
+  setNodes: store.setNodes,
+  setEdges: store.setEdges,
+});
 
 const nodeTypes = {
   oscillator: Oscillator,
@@ -65,8 +81,6 @@ const nodeTypes = {
   value: Value,
   gainNode: GainNode,
   envelope: Envelope,
-  text: Text,
-  qrcode: QRCode,
 };
 
 const initialNodes: Node[] = []; // 这里指定 Node 类型
@@ -79,25 +93,10 @@ export default function Page() {
   const [roomId, setRoomId] = useState("");
   const [bpm, setBpm] = useState(120);
 
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-
   const [init, setInit] = useState(false);
   const [save, setSave] = useState(false);
 
-  const nodesRef = useRef(nodes);
-  const edgesRef = useRef(edges);
-
-  const undoStack = useRef<{ nodes: Node[]; edges: Edge[] }[]>([]);
-  const redoStack = useRef<{ nodes: Node[]; edges: Edge[] }[]>([]);
-
-  const saveStateToUndoStack = (currentNodes: Node[], currentEdges: Edge[]) => {
-    undoStack.current = [
-      ...undoStack.current,
-      { nodes: currentNodes, edges: currentEdges },
-    ];
-    redoStack.current = []; // Clear redo stack on new actions
-  };
+  const store = useStore(selector, shallow);
 
   const edgeReconnectSuccessful = useRef(true);
 
@@ -121,8 +120,8 @@ export default function Page() {
       const data = await fetchNodesAndEdges(roomId);
       // console.log("Nodes and Edges:  ", data);
       // console.log("Nodes:  ", data[0].nodes);
-      setNodes(data[0].nodes ? data[0].nodes : []);
-      setEdges(data[0].edges ? data[0].edges : []);
+      store.setNodes(data[0].nodes ? data[0].nodes : []);
+      store.setEdges(data[0].edges ? data[0].edges : []);
 
       setInit(true);
     }
@@ -142,8 +141,8 @@ export default function Page() {
 
     async function update() {
       console.log("Nodes and Edges updated");
-      console.log("Nodes:  ", nodes);
-      await updateNodesAndEdges(roomId, nodes, edges);
+      console.log("Nodes:  ", store.nodes);
+      await updateNodesAndEdges(roomId, store.nodes, store.edges);
 
       display();
     }
@@ -175,7 +174,7 @@ export default function Page() {
       ) {
         event.preventDefault(); // Prevent default undo behavior
         console.log("Undo triggered");
-        undo(); // Call your undo function here
+        store.undo(); // Call your undo function here
       }
 
       // Redo with Command + Shift + Z (Mac) or Ctrl + Y (Windows)
@@ -188,7 +187,7 @@ export default function Page() {
       ) {
         event.preventDefault(); // Prevent default redo behavior
         console.log("Redo triggered");
-        redo(); // Call your redo function here
+        store.redo(); // Call your redo function here
       }
     };
 
@@ -200,11 +199,11 @@ export default function Page() {
       window.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timeout);
     };
-  }, [roomId, nodes, edges]);
+  }, [roomId, store.nodes, store.edges]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      updateNodesAndEdges(roomId, nodesRef.current, edgesRef.current);
+      updateNodesAndEdges(roomId, store.nodes, store.edges);
       setSave(true);
       setTimeout(() => {
         setSave(false);
@@ -214,11 +213,6 @@ export default function Page() {
     return () => clearInterval(interval);
   }, [roomId]);
 
-  useEffect(() => {
-    nodesRef.current = nodes;
-    edgesRef.current = edges;
-  }, [nodes, edges]);
-
   // 添加新的节点函数
   const addOscillator = () => {
     const newNode = {
@@ -227,7 +221,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Oscillator" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addRGBLight = () => {
@@ -237,7 +231,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "RGB Light" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addNumberInput = () => {
@@ -247,7 +241,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Number Input", value: 0 },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addDestination = () => {
@@ -257,7 +251,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Destination" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addAnalyser = () => {
@@ -267,7 +261,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Analyser" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addSequencer = () => {
@@ -277,7 +271,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Sequencer" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addMIDIInput = () => {
@@ -287,7 +281,7 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "MIDI Input" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addValue = () => {
@@ -297,17 +291,16 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Value" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addGainNode = () => {
     const newNode = {
-      id: nanoid(),
       type: "gainNode",
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Gain Node" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
   const addEnvelope = () => {
@@ -317,113 +310,75 @@ export default function Page() {
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label: "Envelope" },
     };
-    setNodes((nds) => [...nds, newNode]);
+    store.addNode(newNode);
   };
 
-  const addText = () => {
-    const newNode = {
-      id: nanoid(),
-      type: "text",
-      position: { x: Math.random() * 200, y: Math.random() * 200 },
-      data: { label: "Text" },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
+  // // Undo action
+  // const undo = () => {
+  //   if (undoStack.current.length > 0) {
+  //     const previousState = undoStack.current.pop();
+  //     if (previousState) {
+  //       redoStack.current = [
+  //         ...redoStack.current,
+  //         { nodes: previousState.nodes, edges: previousState.edges },
+  //       ];
+  //       setNodes(previousState.nodes);
+  //       setEdges(previousState.edges);
+  //     }
+  //   }
+  // };
 
-  const addQRCode = () => {
-    const newNode = {
-      id: nanoid(),
-      type: "qrcode",
-      position: { x: Math.random() * 200, y: Math.random() * 200 },
-      data: { label: "QR Code", qrCode: qrCodeUrl },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
+  // // Redo action
+  // const redo = () => {
+  //   if (redoStack.current.length > 0) {
+  //     const nextState = redoStack.current.pop();
+  //     if (nextState) {
+  //       undoStack.current = [
+  //         ...undoStack.current,
+  //         { nodes: nextState.nodes, edges: nextState.edges },
+  //       ];
+  //       setNodes(nextState.nodes);
+  //       setEdges(nextState.edges);
+  //     }
+  //   }
+  // };
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange<Node>[]) => {
-      const updatedNodes = applyNodeChanges(changes, nodes);
-      saveStateToUndoStack(nodes, edges);
-      setNodes(updatedNodes);
-    },
-    [nodes, edges]
-  );
+  // const onConnect = useCallback(
+  //   (params: any) => setEdges((eds) => addEdge(params, eds)),
+  //   []
+  // );
 
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange<Edge>[]) => {
-      const updatedEdges = applyEdgeChanges(changes, edges);
-      saveStateToUndoStack(nodes, edges);
-      setEdges(updatedEdges);
-    },
-    [edges]
-  );
+  // const onReconnectStart = useCallback(() => {
+  //   edgeReconnectSuccessful.current = false;
+  // }, []);
 
-  // Undo action
-  const undo = () => {
-    if (undoStack.current.length > 0) {
-      const previousState = undoStack.current.pop();
-      if (previousState) {
-        redoStack.current = [
-          ...redoStack.current,
-          { nodes: previousState.nodes, edges: previousState.edges },
-        ];
-        setNodes(previousState.nodes);
-        setEdges(previousState.edges);
-      }
-    }
-  };
+  // const onReconnect = useCallback((oldEdge: any, newConnection: Connection) => {
+  //   edgeReconnectSuccessful.current = true;
+  //   setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
+  // }, []);
 
-  // Redo action
-  const redo = () => {
-    if (redoStack.current.length > 0) {
-      const nextState = redoStack.current.pop();
-      if (nextState) {
-        undoStack.current = [
-          ...undoStack.current,
-          { nodes: nextState.nodes, edges: nextState.edges },
-        ];
-        setNodes(nextState.nodes);
-        setEdges(nextState.edges);
-      }
-    }
-  };
+  // const onReconnectEnd = useCallback((_: any, edge: { id: string }) => {
+  //   if (!edgeReconnectSuccessful.current) {
+  //     setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+  //   }
 
-  const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
-
-  const onReconnectStart = useCallback(() => {
-    edgeReconnectSuccessful.current = false;
-  }, []);
-
-  const onReconnect = useCallback((oldEdge: any, newConnection: Connection) => {
-    edgeReconnectSuccessful.current = true;
-    setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
-  }, []);
-
-  const onReconnectEnd = useCallback((_: any, edge: { id: string }) => {
-    if (!edgeReconnectSuccessful.current) {
-      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
-    }
-
-    edgeReconnectSuccessful.current = true;
-  }, []);
+  //   edgeReconnectSuccessful.current = true;
+  // }, []);
 
   const menuItems = [
+    {
+      label: "Oscillators",
+      actions: [
+        { label: "New Oscillator", onClick: addOscillator },
+        { label: "New Sequencer", onClick: addSequencer },
+      ],
+    },
     {
       label: "Inputs",
       actions: [
         { label: "New Number Input", onClick: addNumberInput },
         { label: "New MIDI Input", onClick: addMIDIInput },
-      ],
-    },
-    {
-      label: "Utils",
-      actions: [
         { label: "New Value", onClick: addValue },
-        { label: "New Text", onClick: addText },
-        { label: "New QR Code", onClick: addQRCode },
       ],
     },
     {
@@ -436,15 +391,10 @@ export default function Page() {
     {
       label: "Audio",
       actions: [
-        { label: "New Oscillator", onClick: addOscillator },
         { label: "New Gain Node", onClick: addGainNode },
         { label: "New Destination", onClick: addDestination },
         { label: "New Envelope", onClick: addEnvelope },
       ],
-    },
-    {
-      label: "Magic",
-      actions: [{ label: "New Sequencer", onClick: addSequencer }],
     },
   ];
 
@@ -479,13 +429,6 @@ export default function Page() {
           </Popover>
         </div>
       </div>
-
-      {/* <Button
-        variant="outline"
-        className="absolute right-2 top-[74px] z-50 p-2"
-      >
-        <HiOutlineSpeakerXMark className="w-full h-full" />
-      </Button> */}
 
       <div
         className={`absolute z-20 right-2 bottom-2 italic transition-opacity ease-in-out duration-300 ${save ? "opacity-100" : "opacity-0"}`}
@@ -527,14 +470,14 @@ export default function Page() {
           <div className="absolute top-20 right-4 p-2 z-10 space-x-2">
             <Button
               variant={"outline"}
-              onClick={undo}
+              onClick={store.undo}
               className="w-10 h-10 p-2"
             >
               <MdOutlineUndo className="w-full h-full" />
             </Button>
             <Button
               variant={"outline"}
-              onClick={redo}
+              onClick={store.redo}
               className="w-10 h-10 p-2"
             >
               <MdOutlineRedo className="w-full h-full" />
@@ -552,16 +495,16 @@ export default function Page() {
             }}
           >
             <ReactFlow
-              nodes={nodes}
-              onNodesChange={onNodesChange}
-              edges={edges}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
+              nodes={store.nodes}
+              onNodesChange={store.onNodesChange}
+              edges={store.edges}
+              onEdgesChange={store.onEdgesChange}
+              onConnect={store.addEdge}
               nodeTypes={nodeTypes}
               proOptions={{ hideAttribution: true }}
-              onReconnect={onReconnect}
-              onReconnectStart={onReconnectStart}
-              onReconnectEnd={onReconnectEnd}
+              // onReconnect={onReconnect}
+              // onReconnectStart={onReconnectStart}
+              // onReconnectEnd={onReconnectEnd}
               panOnScroll={true}
               zoomOnScroll={false}
               fitView
