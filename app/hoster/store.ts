@@ -7,14 +7,25 @@ import {
   EdgeChange,
 } from "@xyflow/react";
 import { nanoid } from "nanoid";
-import next from "next";
 import { createWithEqualityFn } from "zustand/traditional";
+
+import Oscillator from "./nodes/Oscillator";
+import RGBLight from "./nodes/RGBLight";
+import NumberInput from "./nodes/NumberInput";
+import Destination from "./nodes/Destination";
+import Analyser from "./nodes/Analyser";
+import Sequencer from "./nodes/Sequencer";
+import MIDIInput from "./nodes/MIDIInput";
+import Value from "./nodes/Value";
+import GainNode from "./nodes/GainNode";
+import Envelope from "./nodes/Envelope";
 
 export interface StoreState {
   nodes: Node[];
   edges: Edge[];
   undoStack: { nodes: Node[]; edges: Edge[] }[];
   redoStack: { nodes: Node[]; edges: Edge[] }[];
+  nodeTypes: Record<string, React.FC<any>>;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   addEdge: (data: Omit<Edge, "id">) => void;
@@ -38,6 +49,19 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
   edges: [],
   undoStack: [],
   redoStack: [],
+
+  nodeTypes: {
+    oscillator: Oscillator,
+    rgbLight: RGBLight,
+    numberInput: NumberInput,
+    destination: Destination,
+    analyser: Analyser,
+    sequencer: Sequencer,
+    midiinput: MIDIInput,
+    value: Value,
+    gainNode: GainNode,
+    envelope: Envelope,
+  },
 
   onNodesChange(changes: NodeChange[]) {
     const newNodes = applyNodeChanges(changes, get().nodes);
