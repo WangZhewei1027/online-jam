@@ -1,4 +1,4 @@
-// utils.ts
+"use client";
 import { ToneAudioNode } from "tone";
 import { StoreState } from "./store";
 
