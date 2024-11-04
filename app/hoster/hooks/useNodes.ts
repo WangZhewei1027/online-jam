@@ -26,5 +26,6 @@ export function useNodes() {
     addValue: () => addNode("value", "Value"),
     addGainNode: () => addNode("gainNode", "Gain Node"),
     addEnvelope: () => addNode("envelope", "Envelope"),
+    addText: () => addNode("text", "Text"),
   };
 }

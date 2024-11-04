@@ -1,125 +1,119 @@
 "use client";
-import { useEffect, useRef, Profiler } from "react";
-import {
-  Handle,
-  Position,
-  NodeProps,
-  useHandleConnections,
-  useNodesData,
-} from "@xyflow/react";
+import { useEffect, useRef } from "react";
+import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
 import { HiOutlineSpeakerWave } from "react-icons/hi2";
-
 import { useStore, StoreState } from "../store";
 import { shallow } from "zustand/shallow";
+import { useConnectionData, getSourceData } from "../utils";
+
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
   edges: store.edges,
   useHandleConnections: store.useHandleConnections,
   useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
 });
 
 interface DestinationProps extends NodeProps {
   data: {
-    component?: Tone.ToneAudioNode; // 确保 component 是 ToneAudioNode 类型
+    component?: Tone.ToneAudioNode;
+    label: string;
   };
 }
 
-const Destination = ({
-  id,
-  data: { label },
-  isConnectable,
-  selected,
-}: DestinationProps & { data: { label: string } }) => {
+const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   const store = useStore(selector, shallow);
 
-  const Connections = store.useHandleConnections(id, "target", "destination");
-  const sourceId = Connections?.[0]?.source;
-  const sourceHandleId = Connections?.[0]?.sourceHandle;
-  const NodeData = store.useNodesData(sourceId);
-  const component =
-    sourceHandleId && NodeData?.[sourceHandleId]
-      ? (NodeData[sourceHandleId] as Tone.ToneAudioNode)
-      : null;
+  // 获取与 destination 句柄相连的组件信息
+  const { connections, sourceHandleId, sourceNodeId } = useConnectionData(
+    store,
+    id,
+    "destination"
+  );
 
-  // 使用 useRef 来保持对 component 的持久引用
+  // 若连接的组件为 Tone.ToneAudioNode，设为 inputComponent
+  let inputComponent: Tone.ToneAudioNode | null = null;
+  if (connections.length > 0) {
+    const connectedComponent = getSourceData(
+      store,
+      sourceNodeId,
+      sourceHandleId
+    );
+    if (connectedComponent instanceof Tone.ToneAudioNode) {
+      inputComponent = connectedComponent;
+    }
+  }
+
+  // 用于存储当前连接的音频组件实例
   const componentRef = useRef<{
     id: string;
     instance: Tone.ToneAudioNode;
   } | null>(null);
 
+  // 用于存储上一个连接的音频组件
+  const lastConnectedComponent = useRef<Tone.ToneAudioNode | null>(null);
+
   useEffect(() => {
     const startAudio = async () => {
       try {
-        // 确保音频上下文已启动
+        // 确保音频上下文启动
         if (Tone.getContext().state === "suspended") {
           await Tone.start();
-          console.log("Audio context started");
+          console.info("Audio context started.");
         }
 
-        // 如果 component 存在并且与当前连接的 component 不同，则重新连接
-        if (component instanceof Tone.ToneAudioNode) {
-          const currentComponentId = sourceId || ""; // 使用 sourceId 作为唯一标识符
+        // 更新当前的音频组件引用
+        componentRef.current = inputComponent
+          ? { id: sourceNodeId, instance: inputComponent }
+          : null;
 
-          // 判断当前的 component 是否与上次的相同
+        if (componentRef.current) {
+          lastConnectedComponent.current = inputComponent;
+          //componentRef.current.instance.disconnect(Tone.getDestination());
+          componentRef.current.instance.connect(Tone.getDestination());
+          console.info(`Connected new component with ID: ${sourceNodeId}`);
+
           if (
-            !componentRef.current ||
-            componentRef.current.id !== currentComponentId
+            "start" in componentRef.current.instance &&
+            typeof componentRef.current.instance.start === "function"
           ) {
-            // 如果 component 发生变化，则连接新的 component
-            component.connect(Tone.getDestination());
-            componentRef.current = {
-              id: currentComponentId,
-              instance: component,
-            }; // 更新引用
-
-            // 如果是 Tone.js 的启动型节点，则启动
-            if ("start" in component && typeof component.start === "function") {
-              component.start();
-              console.log("New component started");
-            }
+            componentRef.current.instance.start();
           }
+          console.info(`Connected new component with ID: ${sourceNodeId}`);
+        } else {
+          lastConnectedComponent.current?.disconnect(Tone.getDestination());
+          lastConnectedComponent.current = null;
+          console.info(
+            "Disconnected from previous component as no new connection was found."
+          );
         }
       } catch (error) {
-        console.error("Error starting audio context or component:", error);
+        console.error(
+          "Error during audio context or component connection:",
+          error
+        );
       }
     };
 
     startAudio();
-    console.log("触发了更新");
-  }, [component, sourceId]); // 依赖 component 和 sourceId 进行更新
-
-  // 监听 connections 的变化，检查连接数是否为 0
-  useEffect(() => {
-    if (Connections.length < 1 && componentRef.current) {
-      try {
-        Tone.start();
-        componentRef.current.instance.disconnect(Tone.getDestination());
-        console.log("Component disconnected due to no connections");
-        componentRef.current = null; // 清空 ref 以防止后续操作
-      } catch (error) {
-        console.error("Catch error during disconnection");
-      }
-    }
-  }, [Connections]); // 依赖 connections
+  }, [inputComponent, sourceNodeId]);
 
   useEffect(() => {
     return () => {
-      // 清理时，断开当前 component 的连接
+      // 在组件卸载时断开连接
       if (componentRef.current) {
         try {
           componentRef.current.instance.disconnect(Tone.getDestination());
-          console.log("Component disconnected during cleanup");
-          componentRef.current = null; // 清空 ref
+          componentRef.current = null;
+          console.info("Component disconnected during cleanup.");
         } catch (error) {
           console.error("Error during cleanup disconnection:", error);
         }
       }
     };
-  }, []); // 仅在组件卸载时运行
+  }, []);
 
   return (
     <div className={`my-node ${selected ? "my-node-selected" : ""}`}>

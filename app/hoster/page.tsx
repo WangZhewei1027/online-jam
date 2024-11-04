@@ -30,6 +30,7 @@ import { shallow } from "zustand/shallow";
 import { useStore, StoreState } from "./store";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
+import { on } from "events";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -44,6 +45,9 @@ const selector = (store: StoreState) => ({
   redo: store.redo,
   setNodes: store.setNodes,
   setEdges: store.setEdges,
+  onReconnect: store.onReconnect,
+  onReconnectStart: store.onReconnectStart,
+  onReconnectEnd: store.onReconnectEnd,
 });
 
 export default function Page() {
@@ -68,6 +72,7 @@ export default function Page() {
     addValue,
     addGainNode,
     addEnvelope,
+    addText,
   } = useNodes();
 
   async function handleQRCodeClick() {
@@ -145,6 +150,7 @@ export default function Page() {
       actions: [
         { label: "New RGBLight", onClick: addRGBLight },
         { label: "New Analyser", onClick: addAnalyser },
+        { label: "Text", onClick: addText },
       ],
     },
     {
@@ -261,11 +267,12 @@ export default function Page() {
               onConnect={store.addEdge}
               nodeTypes={store.nodeTypes}
               proOptions={{ hideAttribution: true }}
-              // onReconnect={onReconnect}
-              // onReconnectStart={onReconnectStart}
-              // onReconnectEnd={onReconnectEnd}
               panOnScroll={true}
               zoomOnScroll={false}
+              edgesReconnectable={true}
+              onReconnectStart={store.onReconnectStart}
+              onReconnect={store.onReconnect}
+              onReconnectEnd={store.onReconnectEnd}
               fitView
             >
               <Background />

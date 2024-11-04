@@ -22,12 +22,10 @@ function NumberInput({
   const store = useStore(selector, shallow);
 
   const onChange = useCallback((evt: any) => {
-    // 检查输入值是否为空，如果为空，则设置为 0
     const newValue = evt.target.value;
     setNumber(newValue);
     store.updateNode(id, {
-      output: newValue === "" ? 0 : newValue,
-      value: newValue === "" ? 0 : newValue,
+      output: newValue ? parseFloat(newValue) : 0,
     });
     console.log("NumberInput onChange", newValue);
   }, []);
