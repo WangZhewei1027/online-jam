@@ -26,14 +26,16 @@ const selector = (store: StoreState) => ({
 
 function Oscillator({
   id,
-  data: { label, type },
+  data: { label, type = "sine" },
   selected,
 }: NodeProps & { data: { label: string; type: string } }) {
   const store = useStore(selector, shallow);
-  const [waveType, setWaveType] = useState(type); // 当前波形类型
-  const oscRef = useRef<Tone.Oscillator | null>(null); // 创建 Tone.Oscillator
+  const [waveType, setWaveType] = useState<Tone.ToneOscillatorType>(
+    type as Tone.ToneOscillatorType
+  ); // Set initial wave type
+  const oscRef = useRef<Tone.Oscillator | null>(null); // Oscillator reference
 
-  // 获取频率控制输入
+  // Fetch frequency input connections
   const {
     connections: frequencyConnections,
     sourceHandleId: frequencyHandleId,
@@ -48,10 +50,10 @@ function Oscillator({
     }
   }
 
-  // 初始化振荡器并清理
+  // Initialize oscillator and clean up
   useEffect(() => {
     if (!oscRef.current) {
-      oscRef.current = new Tone.Oscillator(0, type as Tone.ToneOscillatorType);
+      oscRef.current = new Tone.Oscillator(0, waveType);
       oscRef.current.start();
     }
     store.updateNode(id, { component: oscRef.current });
@@ -63,22 +65,24 @@ function Oscillator({
       }
       console.log("Oscillator disposed");
     };
-  }, []);
+  }, []); // Only run on mount and unmount
 
-  // 更新频率
+  // Update frequency
   useEffect(() => {
     if (oscRef.current) {
       oscRef.current.frequency.rampTo(frequency, 0);
     }
   }, [frequency]);
 
-  // 更新波形类型
+  // Update wave type
   useEffect(() => {
-    if (oscRef.current) {
-      oscRef.current.type = waveType as Tone.ToneOscillatorType; // 使用 Tone.js 支持的波形类型
-      store.updateNode(id, {
-        type: waveType,
-      });
+    if (
+      oscRef.current &&
+      ["sine", "square", "triangle", "sawtooth"].includes(waveType)
+    ) {
+      oscRef.current.type = waveType;
+      store.updateNode(id, { type: waveType });
+      console.log("Wave type set to", waveType);
     }
   }, [waveType]);
 
@@ -88,7 +92,7 @@ function Oscillator({
         selected ? "my-node-selected" : ""
       } w-[64px] h-[64px]`}
     >
-      {/* 频率输入句柄 */}
+      {/* Frequency input handle */}
       <TargetHandle
         id="frequency"
         type="target"
@@ -100,7 +104,7 @@ function Oscillator({
         <div>{frequency} Hz</div>
       </div>
 
-      {/* 波形类型输入句柄 */}
+      {/* Wave type dropdown */}
       <TargetHandle
         id="type"
         type="target"
@@ -118,7 +122,10 @@ function Oscillator({
               <DropdownMenuLabel>Wave Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {["sine", "square", "triangle", "sawtooth"].map((type) => (
-                <DropdownMenuItem key={type} onClick={() => setWaveType(type)}>
+                <DropdownMenuItem
+                  key={type}
+                  onClick={() => setWaveType(type as Tone.ToneOscillatorType)}
+                >
                   {type}
                 </DropdownMenuItem>
               ))}
@@ -127,10 +134,10 @@ function Oscillator({
         </div>
       </div>
 
-      {/* 振荡器输出句柄 */}
+      {/* Oscillator output handle */}
       <Handle type="source" position={Position.Right} id="component" />
 
-      {/* 显示标签 */}
+      {/* Display label */}
       <div className="my-label">{label}</div>
     </div>
   );

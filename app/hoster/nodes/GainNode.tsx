@@ -7,6 +7,7 @@ import TargetHandle from "./TargetHandle";
 import { useStore, StoreState } from "../store";
 import { shallow } from "zustand/shallow";
 import { getSourceData, useConnectionData } from "../utils";
+import { start } from "repl";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -58,50 +59,63 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   }
   const gainRef = useRef<Tone.Gain>(new Tone.Gain(gainValue));
 
+  const lastConnectedComponent = useRef<Tone.ToneAudioNode | null>(null);
+
   useEffect(() => {
     if (!gainRef.current) {
       gainRef.current = new Tone.Gain(gainValue);
     }
     store.updateNode(id, { component: gainRef.current });
+
     return () => {
       gainRef.current.dispose();
     };
   }, []);
 
   useEffect(() => {
-    // 获取当前 Gain 节点并平滑过渡到新值
     const gainNode = gainRef.current;
+
+    // 平滑过渡到新值
     gainNode.gain.rampTo(gainValue, 0.05);
     console.log("Gain value updated to", gainValue);
+  }, [gainValue]); // 仅在 gainValue 变化时调用
 
-    const currentComponentId = audioSourceId || "";
-    if (
-      audioComponent instanceof Tone.ToneAudioNode &&
-      (!audioComponentRef.current ||
-        audioComponentRef.current.id !== currentComponentId)
-    ) {
-      audioComponentRef.current?.instance.disconnect(gainNode);
+  useEffect(() => {
+    const gainNode = gainRef.current;
+
+    if (audioComponent instanceof Tone.ToneAudioNode) {
+      // 若存在前一个连接，先断开
+      if (lastConnectedComponent.current) {
+        lastConnectedComponent.current.disconnect(gainNode);
+      }
+
+      // 新的音频组件连接到 GainNode
       audioComponent.connect(gainNode);
-      audioComponentRef.current = {
-        id: currentComponentId,
-        instance: audioComponent,
-      };
       if (
         "start" in audioComponent &&
         typeof audioComponent.start === "function"
       ) {
         audioComponent.start();
       }
-    }
-  }, [audioComponent, gainValue]);
 
-  // 检查音频输入连接，若为空则断开 Gain 节点
-  useEffect(() => {
-    if (audioConnections.length < 1 && gainRef.current) {
-      gainRef.current.disconnect();
-      console.log("Disconnected Gain due to no audio input connections");
+      // 更新引用
+      audioComponentRef.current = {
+        id: audioSourceId,
+        instance: audioComponent,
+      };
+      lastConnectedComponent.current = audioComponent;
+      console.log("Connected new audio component to GainNode");
     }
-  }, [audioConnections]);
+
+    return () => {
+      // 在依赖项变化或卸载时清理
+      if (lastConnectedComponent.current) {
+        lastConnectedComponent.current.disconnect(gainNode);
+        lastConnectedComponent.current = null;
+        console.log("Disconnected previous audio component from GainNode");
+      }
+    };
+  }, [audioComponent]); // 仅在 audioComponent 变化时执行
 
   return (
     <div
