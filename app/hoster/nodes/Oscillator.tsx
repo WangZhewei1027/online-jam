@@ -1,12 +1,17 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
-import { useStore, StoreState } from "../store";
+import {
+  useStore,
+  StoreState,
+  getHandleConnections,
+  getNodeData,
+  updateNode,
+} from "../store";
 import { shallow } from "zustand/shallow";
-import { getSourceData, useConnectionData } from "../utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +24,6 @@ import {
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
   edges: store.edges,
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
 });
 
 function Oscillator({
@@ -30,61 +32,97 @@ function Oscillator({
   selected,
 }: NodeProps & { data: { label: string; type: string } }) {
   const store = useStore(selector, shallow);
-  const [waveType, setWaveType] = useState<Tone.ToneOscillatorType>(
-    type as Tone.ToneOscillatorType
-  ); // Set initial wave type
-  const oscRef = useRef<Tone.Oscillator | null>(null); // Oscillator reference
+  const [frequency, setFrequency] = useState(0);
+  console.log("Oscillator render");
 
-  // Fetch frequency input connections
-  const {
-    connections: frequencyConnections,
-    sourceHandleId: frequencyHandleId,
-    sourceNodeId: frequencyNodeId,
-  } = useConnectionData(store, id, "frequency");
+  //Get frequency from source node
+  const frequencyConnection = getHandleConnections(id, "target", "frequency");
+  const frequencySourceNodeData: number | null =
+    frequencyConnection.length > 0 && frequencyConnection[0].sourceHandle
+      ? getNodeData(
+          frequencyConnection[0].source,
+          frequencyConnection[0].sourceHandle
+        )
+      : null;
+  const fre: number =
+    typeof frequencySourceNodeData === "number"
+      ? Number(frequencySourceNodeData.toFixed(2))
+      : 0;
 
-  let frequency: number = 0;
-  if (frequencyConnections.length > 0) {
-    const data = getSourceData(store, frequencyNodeId, frequencyHandleId);
-    if (typeof data === "number" && data > 0) {
-      frequency = data;
-    }
-  }
-
-  // Initialize oscillator and clean up
   useEffect(() => {
-    if (!oscRef.current) {
-      oscRef.current = new Tone.Oscillator(0, waveType);
-      oscRef.current.start();
+    setFrequency(fre);
+    if (oscRef.current) {
+      oscRef.current.frequency.value = fre;
     }
-    store.updateNode(id, { component: oscRef.current });
+  }, [fre]);
 
+  const oscRef = useRef<Tone.Oscillator | null>(null);
+
+  useEffect(() => {
+    // 初始化 Tone.Oscillator 实例
+    if (!oscRef.current) {
+      oscRef.current = new Tone.Oscillator(frequency);
+      oscRef.current.start();
+      updateNode(id, { component: oscRef.current });
+    }
+
+    // 在组件卸载时停止并清理 Tone.Oscillator 实例
     return () => {
       if (oscRef.current) {
         oscRef.current.stop();
-        oscRef.current.dispose();
+        oscRef.current.dispose(); // 释放资源，防止内存泄漏
+        oscRef.current = null;
       }
-      console.log("Oscillator disposed");
     };
-  }, []); // Only run on mount and unmount
+  }, []); // 仅在初次渲染时执行
 
-  // Update frequency
-  useEffect(() => {
-    if (oscRef.current) {
-      oscRef.current.frequency.rampTo(frequency, 0);
-    }
-  }, [frequency]);
+  // const [waveType, setWaveType] = useState<Tone.ToneOscillatorType>(
+  //   type as Tone.ToneOscillatorType
+  // ); // Set initial wave type
+  // const oscRef = useRef<Tone.Oscillator | null>(null); // Oscillator reference
 
-  // Update wave type
-  useEffect(() => {
-    if (
-      oscRef.current &&
-      ["sine", "square", "triangle", "sawtooth"].includes(waveType)
-    ) {
-      oscRef.current.type = waveType;
-      store.updateNode(id, { type: waveType });
-      console.log("Wave type set to", waveType);
-    }
-  }, [waveType]);
+  // const frequencyConnection = getHandleConnections(id, "target", "frequency");
+  // const frequencySourceNodeData =
+  //   frequencyConnection.length > 0
+  //     ? getNodeData(frequencyConnection[0].source)
+  //     : null;
+  // const frequency: number = frequencySourceNodeData?.frequency ?? 0;
+
+  // // Initialize oscillator and clean up
+  // useEffect(() => {
+  //   if (!oscRef.current) {
+  //     oscRef.current = new Tone.Oscillator(0, waveType);
+  //     oscRef.current.start();
+  //   }
+  //   updateNode(id, { component: oscRef.current });
+
+  //   return () => {
+  //     if (oscRef.current) {
+  //       oscRef.current.stop();
+  //       oscRef.current.dispose();
+  //     }
+  //     console.log("Oscillator disposed");
+  //   };
+  // }, []); // Only run on mount and unmount
+
+  // // Update frequency
+  // useEffect(() => {
+  //   if (oscRef.current) {
+  //     oscRef.current.frequency.rampTo(frequency, 0);
+  //   }
+  // }, [frequency]);
+
+  // // Update wave type
+  // useEffect(() => {
+  //   if (
+  //     oscRef.current &&
+  //     ["sine", "square", "triangle", "sawtooth"].includes(waveType)
+  //   ) {
+  //     oscRef.current.type = waveType;
+  //     store.updateNode(id, { type: waveType });
+  //     console.log("Wave type set to", waveType);
+  //   }
+  // }, [waveType]);
 
   return (
     <div
@@ -93,7 +131,7 @@ function Oscillator({
       } w-[64px] h-[64px]`}
     >
       {/* Frequency input handle */}
-      <TargetHandle
+      <Handle
         id="frequency"
         type="target"
         position={Position.Left}
@@ -105,7 +143,7 @@ function Oscillator({
       </div>
 
       {/* Wave type dropdown */}
-      <TargetHandle
+      <Handle
         id="type"
         type="target"
         position={Position.Left}
@@ -113,7 +151,7 @@ function Oscillator({
       />
       <div className="absolute text-[6px] font-bold top-[70%] left-1 -translate-y-1/2">
         <div>Type</div>
-        <div>
+        {/* <div>
           <DropdownMenu>
             <DropdownMenuTrigger className="border">
               {waveType}
@@ -131,7 +169,7 @@ function Oscillator({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </div> */}
       </div>
 
       {/* Oscillator output handle */}

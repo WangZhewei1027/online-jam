@@ -2,12 +2,12 @@
 import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
 import "../styles.css";
+import { shallow } from "zustand/shallow";
 
 import { useStore, StoreState } from "../store";
 const selector = (store: StoreState) => ({
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
+  nodes: store.nodes,
+  edges: store.edges,
 });
 
 function Text({
@@ -17,8 +17,9 @@ function Text({
   positionAbsoluteX,
   ...props
 }: NodeProps & { data: { label: string } }) {
-  console.log("Text render");
-  console.log(positionAbsoluteX);
+  const store = useStore(selector, shallow);
+  // console.log("Text render");
+  // console.log(positionAbsoluteX);
   return (
     <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
       <div className="my-label">{label}</div>

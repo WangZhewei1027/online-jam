@@ -23,7 +23,7 @@ import Value from "./nodes/Value";
 import GainNode from "./nodes/GainNode";
 import Envelope from "./nodes/Envelope";
 import Text from "./nodes/Text";
-import { text } from "stream/consumers";
+import XYPad from "./nodes/XYPad";
 
 export interface StoreState {
   nodes: Node[];
@@ -34,8 +34,29 @@ export interface StoreState {
   edgeReconnectSuccessful: { current: boolean };
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
-  addEdge: (data: Omit<Edge, "id">) => void;
-  addNode: (data: Omit<Node, "id">) => void;
+
+  /**
+   * description: 我的自定义addNode函数
+   *
+   * 1. 为传入的connection添加id生成新的edge，并将其合并入edges数组中
+   *
+   * 2. 查找并移除与当前 target ID和 targetHandle ID相同的旧连接，维护多出一入的规则
+   *
+   * @param newEdge 要添加的edge
+   * @returns
+   */
+  addEdge: (newEdge: Connection) => void;
+
+  /**
+   * description: 我的自定义addNode函数
+   *
+   * 将newNode合并入nodes数组中
+   *
+   * @param newNode 要添加的节点
+   * @returns
+   */
+  addNode: (newNode: Node) => void;
+
   updateNode: (id: string, data: any) => void;
   removeNode: (id: string) => void;
   removeEdge: (id: string) => void;
@@ -44,12 +65,15 @@ export interface StoreState {
   saveStateToUndoStack: (currentNodes: Node[], currentEdges: Edge[]) => void;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
-  useHandleConnections: (
+
+  getHandleConnections: (
     nodeId: string,
     type: "source" | "target",
     handleId: string
   ) => Edge[];
-  useNodesData: (nodeId: string) => any;
+
+  getNodeData: (nodeId: string, sourceHandleId: string) => any | null;
+
   onReconnectStart: () => void;
   onReconnect: (oldEdge: Edge, newConnection: Connection) => void;
   onReconnectEnd: (
@@ -78,10 +102,11 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     gainNode: GainNode,
     envelope: Envelope,
     text: Text,
+    xypad: XYPad,
   },
 
   onNodesChange(changes: NodeChange[]) {
-    console.log("change 被触发");
+    console.log("onNodesChange 被触发");
     const newNodes = applyNodeChanges(changes, get().nodes);
     set({ nodes: newNodes });
     // get().saveStateToUndoStack(newNodes, get().edges);
@@ -93,12 +118,11 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     // get().saveStateToUndoStack(get().nodes, newEdges);
   },
 
-  addEdge(data: Omit<Edge, "id">) {
-    const id = nanoid(6);
-    const edge: Edge = { id, ...data };
+  addEdge(data: Connection) {
+    const edge: Edge = { id: nanoid(6), ...data };
 
     set((state) => {
-      // 查找并移除与当前 target 和 targetHandle 相同的旧连接
+      // 查找并移除与当前 target ID和 targetHandle ID相同的旧连接，用于维护多出一入的规则
       const updatedEdges = state.edges.filter(
         (existingEdge) =>
           !(
@@ -107,22 +131,16 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
           )
       );
 
-      // 添加新的连接
       const newEdges = [edge, ...updatedEdges];
 
-      // 更新 edges 并保存状态
       return { edges: newEdges };
     });
-
-    // get().saveStateToUndoStack(get().nodes, get().edges);
   },
 
-  addNode(data: Omit<Node, "id">) {
-    const id = nanoid(6);
-    const node: Node = { id, ...data };
-    const newNodes = [node, ...get().nodes];
-    set({ nodes: newNodes });
-    // get().saveStateToUndoStack(newNodes, get().edges);
+  addNode(newNode: Node) {
+    set((state) => ({
+      nodes: [newNode, ...state.nodes],
+    }));
   },
 
   updateNode(id: string, data: any) {
@@ -192,26 +210,35 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     });
   },
 
-  setNodes: (nodes: Node[]) => set({ nodes }),
-  setEdges: (edges: Edge[]) => set({ edges }),
+  setNodes: (nodes: Node[]) => set({ nodes: nodes }),
+  setEdges: (edges: Edge[]) => set({ edges: edges }),
 
-  useHandleConnections(
+  getHandleConnections(
     nodeId: string,
     type: "source" | "target",
     handleId: string
   ) {
     const edges = get().edges;
-    return edges.filter(
+
+    const filterEdges = edges.filter(
       (edge) =>
         edge[type] === nodeId &&
-        edge[(type + "Handle") as "sourceHandle" | "targetHandle"] === handleId
+        edge[`${type}Handle` as "sourceHandle" | "targetHandle"] === handleId
     );
+
+    if (filterEdges.length > 1 && type === "target") {
+      console.warn(
+        `Multiple connections found for target handle ID "${handleId}" on node ID "${nodeId}".`
+      );
+    }
+
+    return filterEdges;
   },
 
-  useNodesData: (nodeId: string) => {
+  getNodeData: (nodeId: string, sourceHandleId: string) => {
     const nodes = get().nodes;
     const node = nodes.find((node) => node.id === nodeId);
-    return node ? node.data : null;
+    return node ? node.data[sourceHandleId] : null;
   },
 
   // 新增的 onReconnectStart 方法
@@ -258,3 +285,26 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     set(() => ({ edgeReconnectSuccessful: { current: false } }));
   },
 }));
+
+/**
+ * description: 返回指定handle上的所有connections
+ *
+ * nodeId, type, handleId 三个参数可以确定唯一handle
+ *
+ * @param nodeId 指定handle所在node的id
+ * @param type 指定handle的type，source或target
+ * @param handleId 指定handle的id
+ * @returns 所有连接到指定handle的edges
+ */
+export const getHandleConnections = useStore.getState().getHandleConnections;
+
+/**
+ * description: 获取指定node的data中的sourceHandleId代表的key的值
+ *
+ * @param nodeId 指定node的id
+ * @param sourceHandleId 指定handle的id
+ * @returns 指定node的data
+ */
+export const getNodeData = useStore.getState().getNodeData;
+
+export const updateNode = useStore.getState().updateNode;

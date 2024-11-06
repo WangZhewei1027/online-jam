@@ -7,7 +7,7 @@ export function useNodes() {
 
   const addNode = (type: string, label: string) => {
     const newNode = {
-      id: nanoid(),
+      id: nanoid(6),
       type,
       position: { x: Math.random() * 200, y: Math.random() * 200 },
       data: { label },
@@ -27,5 +27,6 @@ export function useNodes() {
     addGainNode: () => addNode("gainNode", "Gain Node"),
     addEnvelope: () => addNode("envelope", "Envelope"),
     addText: () => addNode("text", "Text"),
+    addXYPad: () => addNode("xypad", "XYPad"),
   };
 }

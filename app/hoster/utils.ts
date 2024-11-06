@@ -12,7 +12,14 @@ export const selector = (store: StoreState) => ({
 // Define a type for the selector's return value
 export type SelectorType = ReturnType<typeof selector>;
 
-// Helper function to fetch source node data with error handling
+/**
+ * 根据Node ID 和Handle ID 获取源数据
+ * 这个函数
+ *
+ * @param a 第一个数
+ * @param b 第二个数
+ * @returns 两个数的和
+ */
 export function getSourceData(
   store: SelectorType, // Use SelectorType here
   nodeId?: string,
@@ -34,16 +41,27 @@ export function getSourceData(
   return nodeData[handleId];
 }
 
-// Helper function to retrieve connections and extract sourceNodeId and sourceHandleId
+/**
+ * 根据Node ID 和Handle ID 获取Connections
+ *
+ * Node ID指的是自身Node的ID，Handle ID指的是自身某个source handle的ID，返回的是连接到这个source handle的connection
+ *
+ * 根据target handle只能被一个source handle连接的规则，返回的connections数组应只有一个元素；如果没有连接，则返回null；如果有多个连接，则返回所有连接，但会打印一个warn。
+ *
+ *
+ * @param store
+ * @param nodeId
+ * @param handleId
+ * @returns connections, sourceHandleId, sourceNodeId
+ */
 export function useConnectionData(
   store: SelectorType,
   nodeId: string,
   handleId: string
 ) {
   const connections = store.useHandleConnections(nodeId, "target", handleId);
-  const sourceHandleId: string | undefined =
-    connections?.[0]?.sourceHandle ?? undefined;
-  const sourceNodeId: string | undefined = connections?.[0]?.source;
+  const sourceHandleId: string | null = connections?.[0]?.sourceHandle ?? null;
+  const sourceNodeId: string | null = connections?.[0]?.source;
 
   return { connections, sourceHandleId, sourceNodeId };
 }

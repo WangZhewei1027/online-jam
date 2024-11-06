@@ -2,7 +2,13 @@
 import { useEffect, useState, Profiler, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
-import { useStore, StoreState } from "../store";
+import {
+  useStore,
+  StoreState,
+  getHandleConnections,
+  getNodeData,
+  updateNode,
+} from "../store";
 import { shallow } from "zustand/shallow";
 import { PiPianoKeys } from "react-icons/pi";
 
@@ -10,17 +16,7 @@ import { PiPianoKeys } from "react-icons/pi";
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
   edges: store.edges,
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
 });
-
-// Define Value Props with TypeScript
-interface ValueProps extends NodeProps {
-  data: {
-    label: string;
-  };
-}
 
 // Map of keyboard keys to MIDI notes for white and black keys
 const whiteKeys: Record<string, number> = {
@@ -42,7 +38,18 @@ const blackKeys: Record<string, number> = {
   u: 70, // A#4
 };
 
-function Value({ id, data: { label }, selected, ...props }: ValueProps) {
+// 定义 data 的类型，要求 label 是 string，midi 是 number
+interface MIDIInputData extends Record<string, unknown> {
+  label: string;
+  midi: number;
+}
+
+// 扩展 NodeProps 以包含我们定义的 MIDIInputData 类型
+interface MIDIInputProps extends NodeProps {
+  data: MIDIInputData;
+}
+
+function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   const store = useStore(selector, shallow);
 
   // Add state for octave offset
@@ -76,7 +83,7 @@ function Value({ id, data: { label }, selected, ...props }: ValueProps) {
       if (midiNote !== null) {
         const frequency = midiToFrequency(midiNote).toFixed(2);
         console.log(`MIDI Note: ${midiNote}, Frequency: ${frequency} Hz`);
-        store.updateNode(id, {
+        updateNode(id, {
           midi: parseFloat(frequency),
         });
       }
@@ -94,30 +101,14 @@ function Value({ id, data: { label }, selected, ...props }: ValueProps) {
     };
   }, [handleKeyDown]);
 
-  const onRenderCallback = (
-    id: string,
-    phase: "mount" | "update" | "nested-update",
-    actualDuration: number,
-    baseDuration: number,
-    startTime: number,
-    commitTime: number,
-    interactions: Set<any>
-  ) => {
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`Profiler ID: ${id}, Phase: ${phase}`);
-      console.log(`Actual duration: ${actualDuration}`);
-      console.log(`Base duration: ${baseDuration}`);
-    }
-  };
-
   return (
     <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
       <PiPianoKeys />
       <div className="text-[8px] text-center mt-1">{octaveOffset}</div>
       <Handle type="source" position={Position.Right} id="midi" />
-      <div className="my-label">{label}</div>
+      <div className="my-label">{data.label}</div>
     </div>
   );
 }
 
-export default Value;
+export default MIDIInput;

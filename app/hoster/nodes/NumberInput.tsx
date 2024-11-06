@@ -3,12 +3,18 @@ import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
 import "../styles.css";
 
-import { useStore, StoreState } from "../store";
+import {
+  useStore,
+  StoreState,
+  getHandleConnections,
+  getNodeData,
+  updateNode,
+} from "../store";
 import { shallow } from "zustand/shallow";
+
 const selector = (store: StoreState) => ({
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
+  nodes: store.nodes,
+  edges: store.edges,
 });
 
 function NumberInput({
@@ -24,7 +30,7 @@ function NumberInput({
   const onChange = useCallback((evt: any) => {
     const newValue = evt.target.value;
     setNumber(newValue);
-    store.updateNode(id, {
+    updateNode(id, {
       output: newValue ? parseFloat(newValue) : 0,
     });
     console.log("NumberInput onChange", newValue);

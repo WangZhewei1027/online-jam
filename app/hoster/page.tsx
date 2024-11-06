@@ -73,6 +73,7 @@ export default function Page() {
     addGainNode,
     addEnvelope,
     addText,
+    addXYPad,
   } = useNodes();
 
   async function handleQRCodeClick() {
@@ -143,6 +144,7 @@ export default function Page() {
         { label: "New Number Input", onClick: addNumberInput },
         { label: "New MIDI Input", onClick: addMIDIInput },
         { label: "New Value", onClick: addValue },
+        { label: "New XYPad", onClick: addXYPad },
       ],
     },
     {

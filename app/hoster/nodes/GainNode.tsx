@@ -1,20 +1,20 @@
 "use client";
-import { use, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
-import { useStore, StoreState } from "../store";
+import {
+  useStore,
+  StoreState,
+  getHandleConnections,
+  getNodeData,
+} from "../store";
 import { shallow } from "zustand/shallow";
-import { getSourceData, useConnectionData } from "../utils";
-import { start } from "repl";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
   edges: store.edges,
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
 });
 
 interface GainNodeProps extends NodeProps {
@@ -28,12 +28,12 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   const store = useStore(selector, shallow);
 
   // 获取audio输入连接
-  const {
-    connections: audioConnections,
-    sourceHandleId: audioSourceHandleId,
-    sourceNodeId: audioSourceId,
-  } = useConnectionData(store, id, "audio");
-  const audioComponent = getSourceData(store, audioSourceId, "component");
+  const audioConnections = getHandleConnections(id, "target", "audio");
+  const audioComponent =
+    audioConnections.length > 0
+      ? getNodeData(audioConnections[0].source)
+      : null;
+
   // 使用 ref 保持对连接组件的引用
   const audioComponentRef = useRef<{
     id: string;
