@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, Profiler, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../store";
 import { shallow } from "zustand/shallow";
 import { PiPianoKeys } from "react-icons/pi";
+import { BsLightbulbFill } from "react-icons/bs"; // 灯泡图标
 
 // Store selector to subscribe to all necessary store properties
 const selector = (store: StoreState) => ({
@@ -52,8 +53,12 @@ interface MIDIInputProps extends NodeProps {
 function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   const store = useStore(selector, shallow);
 
-  // Add state for octave offset
+  // Add state for octave offset and light bulb state
   const [octaveOffset, setOctaveOffset] = useState(0);
+  const [isLightOn, setIsLightOn] = useState(false); // 灯泡状态
+
+  // 用于记录已按下的键，避免重复触发 keydown
+  const pressedKeys = new Set<string>();
 
   // Handle keyboard events to simulate MIDI input
   const handleKeyDown = useCallback(
@@ -61,8 +66,13 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
       const key = event.key.toLowerCase();
       let midiNote = null;
 
+      // 检查是否已经记录按下的键，若已记录则跳过处理
+      if (pressedKeys.has(key)) return;
+      pressedKeys.add(key); // 添加到 pressedKeys 集合
+
       const isMac = navigator.platform.toUpperCase().includes("MAC");
 
+      // 忽略保存快捷键
       if (
         (isMac && event.metaKey && key === "s") ||
         (!isMac && event.ctrlKey && key === "s")
@@ -86,26 +96,59 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
         updateNode(id, {
           midi: parseFloat(frequency),
         });
+
+        // 按下键盘时点亮灯泡
+        setIsLightOn(true);
+        updateNode(id, { trigger: "triggerAttack" });
       }
     },
     [octaveOffset]
   );
+
+  // 处理 keyup 事件，在松开按键时熄灭灯泡
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    pressedKeys.delete(key); // 从 pressedKeys 集合中移除键
+
+    setIsLightOn(false);
+    updateNode(id, { trigger: "triggerRelease" });
+  }, []);
 
   const midiToFrequency = (midiNote: number): number =>
     440 * Math.pow(2, (midiNote - 69) / 12);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown, { capture: true });
+    window.addEventListener("keyup", handleKeyUp, { capture: true });
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      window.removeEventListener("keyup", handleKeyUp, { capture: true });
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, handleKeyUp]);
 
   return (
     <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
-      <PiPianoKeys />
+      <div className="flex items-center">
+        <PiPianoKeys />
+        {/* 灯泡图标，根据 isLightOn 状态调整颜色 */}
+        <BsLightbulbFill
+          className={`ml-2 ${isLightOn ? "text-yellow-400" : "text-gray-300"}`}
+        />
+      </div>
       <div className="text-[8px] text-center mt-1">{octaveOffset}</div>
-      <Handle type="source" position={Position.Right} id="midi" />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ top: "30%" }}
+        id="midi"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ top: "70%" }}
+        id="trigger"
+      />
       <div className="my-label">{data.label}</div>
     </div>
   );

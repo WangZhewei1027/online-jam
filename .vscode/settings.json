@@ -1,2 +1,5 @@
 {
+    "problems.decorations.enabled": true,
+    "problems.autoReveal": true,
+    "typescript.tsserver.experimental.enableProjectDiagnostics": true
 }

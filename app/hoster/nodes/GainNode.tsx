@@ -9,6 +9,7 @@ import {
   StoreState,
   getHandleConnections,
   getNodeData,
+  updateNode,
 } from "../store";
 import { shallow } from "zustand/shallow";
 
@@ -27,95 +28,96 @@ interface GainNodeProps extends NodeProps {
 const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   const store = useStore(selector, shallow);
 
-  // 获取audio输入连接
-  const audioConnections = getHandleConnections(id, "target", "audio");
-  const audioComponent =
-    audioConnections.length > 0
-      ? getNodeData(audioConnections[0].source)
+  // ---------- 处理audio input的逻辑 ---------- //
+  const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
+
+  const audioConnection = getHandleConnections(id, "target", "audio");
+
+  const audioSourceNodeData =
+    audioConnection.length > 0 && audioConnection[0].sourceHandle
+      ? getNodeData(audioConnection[0].source, audioConnection[0].sourceHandle)
       : null;
 
-  // 使用 ref 保持对连接组件的引用
-  const audioComponentRef = useRef<{
-    id: string;
-    instance: Tone.ToneAudioNode;
-  } | null>(
-    audioComponent instanceof Tone.ToneAudioNode
-      ? { id: audioSourceId, instance: audioComponent }
-      : null
-  );
+  // ---------- Gain 值输入端口的连接信息 ----------
+  const gainInputRef = useRef<number | Tone.ToneAudioNode>(1);
 
-  // 创建 Gain 实例并存储在 ref 中
-  const {
-    connections: gainConnections,
-    sourceHandleId: gainSourceHandleId,
-    sourceNodeId: gainSourceId,
-  } = useConnectionData(store, id, "gain");
-  var gainValue: number = 1;
-  if (!(gainConnections.length < 1)) {
-    const data = getSourceData(store, gainSourceId, gainSourceHandleId);
-    if (typeof data === "number" && data >= 0) {
-      gainValue = data;
-    }
+  const gainConnections = getHandleConnections(id, "target", "gain");
+
+  // 获取 Gain 控制的数据
+  const gainSourceData: number | Tone.ToneAudioNode =
+    gainConnections.length > 0 && gainConnections[0].sourceHandle
+      ? getNodeData(gainConnections[0].source, gainConnections[0].sourceHandle)
+      : null;
+
+  if (gainSourceData instanceof Tone.ToneAudioNode) {
+    console.log("Gain value is ToneAudioNode");
+    gainInputRef.current = gainSourceData as Tone.ToneAudioNode;
+  } else if (typeof gainSourceData === "number") {
+    gainInputRef.current = gainSourceData as number;
+  } else {
+    gainInputRef.current = 1;
   }
-  const gainRef = useRef<Tone.Gain>(new Tone.Gain(gainValue));
 
-  const lastConnectedComponent = useRef<Tone.ToneAudioNode | null>(null);
+  // ---------- 初始化GainNode ----------
+  const gainRef = useRef<Tone.Gain | null>(null); // Tone.Gain 的引用
 
   useEffect(() => {
+    // 初始化 Tone.Gain 实例
     if (!gainRef.current) {
-      gainRef.current = new Tone.Gain(gainValue);
+      gainRef.current = new Tone.Gain(1);
+      updateNode(id, { component: gainRef.current });
     }
-    store.updateNode(id, { component: gainRef.current });
 
     return () => {
-      gainRef.current.dispose();
+      // 清理 Gain 实例，防止内存泄漏
+      gainRef.current?.dispose();
+      gainRef.current = null;
     };
   }, []);
 
+  // 更新 Gain 值，当 gainValue 改变时触发
   useEffect(() => {
-    const gainNode = gainRef.current;
-
-    // 平滑过渡到新值
-    gainNode.gain.rampTo(gainValue, 0.05);
-    console.log("Gain value updated to", gainValue);
-  }, [gainValue]); // 仅在 gainValue 变化时调用
-
-  useEffect(() => {
-    const gainNode = gainRef.current;
-
-    if (audioComponent instanceof Tone.ToneAudioNode) {
-      // 若存在前一个连接，先断开
-      if (lastConnectedComponent.current) {
-        lastConnectedComponent.current.disconnect(gainNode);
+    if (gainRef.current) {
+      console.log(gainInputRef.current);
+      if (typeof gainInputRef.current === "number") {
+        gainRef.current.gain.rampTo(gainInputRef.current, 0.05);
+        console.log("gainValueRef is number");
+      } else if (gainInputRef.current instanceof Tone.ToneAudioNode) {
+        gainInputRef.current.connect(gainRef.current.gain);
+        console.log("gainValueRef is ToneAudioNode");
       }
-
-      // 新的音频组件连接到 GainNode
-      audioComponent.connect(gainNode);
-      if (
-        "start" in audioComponent &&
-        typeof audioComponent.start === "function"
-      ) {
-        audioComponent.start();
-      }
-
-      // 更新引用
-      audioComponentRef.current = {
-        id: audioSourceId,
-        instance: audioComponent,
-      };
-      lastConnectedComponent.current = audioComponent;
-      console.log("Connected new audio component to GainNode");
     }
 
     return () => {
-      // 在依赖项变化或卸载时清理
-      if (lastConnectedComponent.current) {
-        lastConnectedComponent.current.disconnect(gainNode);
-        lastConnectedComponent.current = null;
-        console.log("Disconnected previous audio component from GainNode");
+      if (
+        gainInputRef.current instanceof Tone.ToneAudioNode &&
+        gainRef.current
+      ) {
+        gainInputRef.current.disconnect(gainRef.current.gain);
       }
     };
-  }, [audioComponent]); // 仅在 audioComponent 变化时执行
+  }, [gainSourceData, gainRef.current, gainInputRef.current]);
+
+  // 处理音频组件的连接
+  useEffect(() => {
+    if (gainRef.current) {
+      if (audioSourceNodeData instanceof Tone.ToneAudioNode) {
+        // 如果音频源是 ToneAudioNode，则连接
+        if (audioComponent.current !== audioSourceNodeData) {
+          // 防止重复连接相同的节点
+          audioComponent.current?.disconnect(gainRef.current);
+          audioComponent.current = audioSourceNodeData;
+          audioComponent.current.connect(gainRef.current);
+        }
+      } else if (audioComponent.current) {
+        // 如果音频源不是 ToneAudioNode，则断开连接
+        audioComponent.current.disconnect(gainRef.current);
+        audioComponent.current = null;
+      }
+    }
+
+    return () => {};
+  }, [audioSourceNodeData, gainRef.current, audioComponent.current]);
 
   return (
     <div

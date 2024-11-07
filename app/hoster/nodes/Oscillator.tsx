@@ -32,10 +32,10 @@ function Oscillator({
   selected,
 }: NodeProps & { data: { label: string; type: string } }) {
   const store = useStore(selector, shallow);
-  const [frequency, setFrequency] = useState(0);
-  console.log("Oscillator render");
 
-  //Get frequency from source node
+  //---------- 获取frequency输入端口的连接信息 ----------
+  const [frequency, setFrequency] = useState(0);
+
   const frequencyConnection = getHandleConnections(id, "target", "frequency");
   const frequencySourceNodeData: number | null =
     frequencyConnection.length > 0 && frequencyConnection[0].sourceHandle
@@ -56,6 +56,7 @@ function Oscillator({
     }
   }, [fre]);
 
+  //---------- 初始化Tone.Oscillator实例 ----------
   const oscRef = useRef<Tone.Oscillator | null>(null);
 
   useEffect(() => {
