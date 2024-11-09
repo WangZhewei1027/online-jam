@@ -4,7 +4,7 @@ import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import { shallow } from "zustand/shallow";
 
-import { useStore, StoreState } from "../store";
+import { useStore, StoreState } from "../utils/store";
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
   edges: store.edges,

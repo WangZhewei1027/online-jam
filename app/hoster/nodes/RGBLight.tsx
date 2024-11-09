@@ -3,8 +3,8 @@ import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
 import TargetHandle from "./TargetHandle";
-import { getSourceData, useConnectionData } from "../utils";
-import { useStore, StoreState } from "../store";
+import { getSourceData, useConnectionData } from "../utils/utils";
+import { useStore, StoreState } from "../utils/store";
 import { shallow } from "zustand/shallow";
 
 // Store selector to subscribe to all necessary store properties

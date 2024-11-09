@@ -5,8 +5,8 @@ import * as Tone from "tone";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/spinner";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
+import { MdPlayArrow } from "react-icons/md";
+import { MdPause } from "react-icons/md";
 import {
   getRoomId,
   fetchSequencerData,
@@ -231,7 +231,7 @@ export default function Sequencer({
                   className="nodrag w-8 h-8 mb-2"
                   variant="outline"
                 >
-                  {playing ? <PauseIcon /> : <PlayArrowIcon />}
+                  {playing ? <MdPause /> : <MdPlayArrow />}
                 </Button>
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
-import "../styles.css";
+import "../utils/store";
 import SQC from "@/app/ui/sequencer";
 
 function Sequencer({

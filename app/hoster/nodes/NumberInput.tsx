@@ -9,7 +9,7 @@ import {
   getHandleConnections,
   getNodeData,
   updateNode,
-} from "../store";
+} from "../utils/store";
 import { shallow } from "zustand/shallow";
 
 const selector = (store: StoreState) => ({

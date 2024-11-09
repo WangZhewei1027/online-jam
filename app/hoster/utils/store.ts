@@ -12,21 +12,22 @@ import {
 import { nanoid } from "nanoid";
 import { createWithEqualityFn } from "zustand/traditional";
 
-import Oscillator from "./nodes/Oscillator";
-import RGBLight from "./nodes/RGBLight";
-import NumberInput from "./nodes/NumberInput";
-import Destination from "./nodes/Destination";
-import Analyser from "./nodes/Analyser";
-import Sequencer from "./nodes/Sequencer";
-import MIDIInput from "./nodes/MIDIInput";
-import Value from "./nodes/Value";
-import GainNode from "./nodes/GainNode";
-import Envelope from "./nodes/Envelope";
-import Text from "./nodes/Text";
-import XYPad from "./nodes/XYPad";
+import Oscillator from "../nodes/Oscillator";
+import RGBLight from "../nodes/RGBLight";
+import NumberInput from "../nodes/NumberInput";
+import Destination from "../nodes/Destination";
+import Analyser from "../nodes/Analyser";
+import Sequencer from "../nodes/Sequencer";
+import MIDIInput from "../nodes/MIDIInput";
+import Value from "../nodes/Value";
+import GainNode from "../nodes/GainNode";
+import Envelope from "../nodes/Envelope";
+import Text from "../nodes/Text";
+import XYPad from "../nodes/XYPad";
 
 export interface StoreState {
   nodes: Node[];
+  nodes_selectedValue: Omit<Node, "position">[];
   edges: Edge[];
   undoStack: { nodes: Node[]; edges: Edge[] }[];
   redoStack: { nodes: Node[]; edges: Edge[] }[];
@@ -85,6 +86,7 @@ export interface StoreState {
 
 export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
   nodes: [],
+  nodes_selectedValue: [],
   edges: [],
   undoStack: [],
   redoStack: [],
@@ -106,9 +108,17 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
   },
 
   onNodesChange(changes: NodeChange[]) {
-    console.log("onNodesChange 被触发");
+    // 应用节点更改并更新状态
     const newNodes = applyNodeChanges(changes, get().nodes);
     set({ nodes: newNodes });
+
+    // 创建 selectedNodes，剔除 position、positionAbsolute、dragging 和 selected 属性
+    const selectedNodes = newNodes.map(
+      ({ position, dragging, selected, ...rest }) => rest
+    );
+    set({ nodes_selectedValue: selectedNodes });
+
+    // 其他状态保存代码
     // get().saveStateToUndoStack(newNodes, get().edges);
   },
 

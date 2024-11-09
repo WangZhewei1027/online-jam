@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import MenuIcon from "@mui/icons-material/Menu";
 
 import {
   Drawer,
@@ -14,6 +13,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import Image from "next/image";
+import { MdMenu } from "react-icons/md";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -76,7 +76,7 @@ const Navbar = () => {
                     onClick={toggleDrawer}
                     className="right-4"
                   >
-                    <MenuIcon />
+                    <MdMenu />
                   </Button>
                 </DrawerTrigger>
                 <DrawerContent>

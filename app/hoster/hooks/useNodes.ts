@@ -1,6 +1,6 @@
 // hooks/useNodes.ts
 import { nanoid } from "nanoid";
-import { useStore } from "../store";
+import { useStore } from "../utils/store";
 
 export function useNodes() {
   const store = useStore();

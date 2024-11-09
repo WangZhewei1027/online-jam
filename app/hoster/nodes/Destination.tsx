@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  NodeProps,
+  useEdges,
+  useNodesData,
+} from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import { HiOutlineSpeakerWave } from "react-icons/hi2";
@@ -9,13 +15,13 @@ import {
   StoreState,
   getHandleConnections,
   getNodeData,
-} from "../store";
-import { shallow } from "zustand/shallow";
-
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-});
+} from "../utils/store";
+import {
+  isAudioSourceNode,
+  isControlSignalNode,
+  isFunctionalNode,
+} from "../utils/tone";
+import { DestinationClass } from "tone/build/esm/core/context/Destination";
 
 interface DestinationProps extends NodeProps {
   data: {
@@ -25,10 +31,12 @@ interface DestinationProps extends NodeProps {
 }
 
 const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
-  const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+  console.log(id, " rendered");
 
   // ---------- 处理destination的逻辑 ---------- //
-  const desRef = useRef<Tone.ToneAudioNode | null>(null);
+  const desRef = useRef<DestinationClass | null>(null);
 
   useEffect(() => {
     // 初始化目的地，确保只执行一次
@@ -64,7 +72,10 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   // 处理音频源的连接和断开逻辑
   useEffect(() => {
     if (desRef.current) {
-      if (audioSourceNodeData instanceof Tone.ToneAudioNode) {
+      if (
+        isAudioSourceNode(audioSourceNodeData) ||
+        isFunctionalNode(audioSourceNodeData)
+      ) {
         // 如果音频源是 ToneAudioNode，则连接
         if (audioComponent.current !== audioSourceNodeData) {
           // 防止重复连接相同的节点
@@ -74,7 +85,12 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
         }
       } else if (audioComponent.current) {
         // 如果音频源不是 ToneAudioNode，则断开连接
-        audioComponent.current.disconnect(desRef.current);
+        if (
+          "disconnect" in audioComponent.current &&
+          typeof audioComponent.current.disconnect === "function"
+        ) {
+          audioComponent.current.disconnect(desRef.current);
+        }
         audioComponent.current = null;
       }
     }

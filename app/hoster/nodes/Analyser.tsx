@@ -12,7 +12,7 @@ import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
 
-import { useStore, StoreState } from "../store";
+import { useStore, StoreState } from "../utils/store";
 import { shallow } from "zustand/shallow";
 const selector = (store: StoreState) => ({
   nodes: store.nodes,

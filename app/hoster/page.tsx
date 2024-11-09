@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import QrCodeIcon from "@mui/icons-material/QrCode";
+import { MdQrCode } from "react-icons/md";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback, useRef, use } from "react";
 import {
@@ -27,10 +27,9 @@ import { MdOutlineUndo } from "react-icons/md";
 import { MdOutlineRedo } from "react-icons/md";
 
 import { shallow } from "zustand/shallow";
-import { useStore, StoreState } from "./store";
-import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import { useStore, StoreState } from "./utils/store";
+import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
-import { on } from "events";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -180,7 +179,7 @@ export default function Page() {
                 onClick={handleQRCodeClick}
                 className="h-10 w-10 ml-4"
               >
-                <QrCodeIcon />
+                <MdQrCode />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px]">
@@ -275,6 +274,7 @@ export default function Page() {
               onReconnectStart={store.onReconnectStart}
               onReconnect={store.onReconnect}
               onReconnectEnd={store.onReconnectEnd}
+              disableKeyboardA11y={true}
               fitView
             >
               <Background />

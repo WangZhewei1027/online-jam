@@ -1,11 +1,13 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import {
   Handle,
   Position,
   NodeProps,
   useHandleConnections,
   useReactFlow,
+  useEdges,
+  useNodesData,
 } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
@@ -16,8 +18,10 @@ import {
   getHandleConnections,
   getNodeData,
   updateNode,
-} from "../store";
+} from "../utils/store";
 import { shallow } from "zustand/shallow";
+import { Slider } from "@/components/ui/slider";
+import ADSRGraph from "../components/ADSRGraph";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -28,16 +32,28 @@ const selector = (store: StoreState) => ({
 interface EnvelopeNodeProps extends NodeProps {
   data: {
     label: string;
+    attackData: number;
+    decayData: number;
+    sustainData: number;
+    releaseData: number;
   };
 }
 
 const Envelope = ({
   id,
-  data: { label },
+  data: { label, attackData, decayData, sustainData, releaseData },
   isConnectable,
   selected,
 }: EnvelopeNodeProps) => {
-  const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+  console.log(id, " rendered");
+
+  // Envelope values (initialize to 50% of max)
+  const [attack, setAttack] = useState(attackData ?? 1); // 50% of max (2)
+  const [decay, setDecay] = useState(decayData ?? 1); // 50% of max (2)
+  const [sustain, setSustain] = useState(sustainData ?? 0.5); // 50% of max (1)
+  const [release, setRelease] = useState(releaseData ?? 1); // 50% of max (2)
 
   //---------- 获取trigger输入端口的连接信息 ----------
   const triggerConnection = getHandleConnections(id, "target", "trigger");
@@ -62,29 +78,6 @@ const Envelope = ({
       }
     }
   }, [triggerSourceNodeData]);
-  // // ADSR connections
-  // const attackConnections = useHandleConnections({
-  //   type: "target",
-  //   id: "attack",
-  // });
-  // const decayConnections = useHandleConnections({
-  //   type: "target",
-  //   id: "decay",
-  // });
-  // const sustainConnections = useHandleConnections({
-  //   type: "target",
-  //   id: "sustain",
-  // });
-  // const releaseConnections = useHandleConnections({
-  //   type: "target",
-  //   id: "release",
-  // });
-
-  // // Extract ADSR values from connections or default values
-  // const attack = attackConnections.length > 0 ? 0.1 : 0.5;
-  // const decay = decayConnections.length > 0 ? 0.1 : 0.3;
-  // const sustain = sustainConnections.length > 0 ? 0.5 : 0.7;
-  // const release = releaseConnections.length > 0 ? 0.8 : 1.0;
 
   // Use useRef to store Tone.Envelope instance
   const envelopeRef = useRef<Tone.Envelope | null>(null);
@@ -94,10 +87,10 @@ const Envelope = ({
   useEffect(() => {
     if (!envelopeRef.current) {
       const envelope = new Tone.Envelope({
-        attack: 2,
-        decay: 3,
-        sustain: 0.8,
-        release: 2,
+        attack: attack,
+        decay: decay,
+        sustain: sustain,
+        release: release,
       });
       envelopeRef.current = envelope;
 
@@ -119,76 +112,137 @@ const Envelope = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (envelopeRef.current) {
+      envelopeRef.current.attack = attack;
+      envelopeRef.current.decay = decay;
+      envelopeRef.current.sustain = sustain;
+      envelopeRef.current.release = release;
+    }
+    updateNode(id, {
+      attackData: attack,
+      decayData: decay,
+      sustainData: sustain,
+      releaseData: release,
+    });
+  }, [attack, decay, sustain, release]);
+
   return (
     <div
-      className={`my-node ${
-        selected ? "my-node-selected" : ""
-      } w-[48px] h-[64px]`}
+      className={`style-node space-y-4 ${selected ? "style-node-selected" : ""}`}
     >
       {/* ADSR controls */}
-      <TargetHandle
-        type="target"
-        position={Position.Left}
-        style={{ top: "10%" }}
-        id="trigger"
-      />
-      <div
-        style={{ top: "10%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        Trigger
+      <div className="flex items-center">
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: "25%", width: "10px", height: "10px" }}
+          id="trigger"
+        />
+        <div className="w-full h-36">
+          <ADSRGraph
+            attack={attack}
+            decay={decay}
+            sustain={sustain}
+            release={release}
+          />
+        </div>
       </div>
-      <TargetHandle
-        type="target"
-        position={Position.Left}
-        style={{ top: "30%" }}
-        id="attack"
-      />
-      <div
-        style={{ top: "30%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        A
+      <div className="flex items-center">
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: "55%", width: "10px", height: "10px" }}
+          id="attack"
+        />
+        <div>
+          <div className="flex place-content-between">
+            <div className="text-sm">Attack</div>
+            <div className="text-sm">{attack.toFixed(2)} s</div>
+          </div>
+          <Slider
+            className="nodrag w-52 mt-2"
+            min={0}
+            max={2}
+            step={0.01}
+            defaultValue={[attack]}
+            onValueChange={(num) => setAttack(num[0])}
+          />
+        </div>
       </div>
-      <TargetHandle
-        type="target"
-        position={Position.Left}
-        style={{ top: "50%" }}
-        id="decay"
-      />
-      <div
-        style={{ top: "50%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        D
+      <div className="">
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: "68%", width: "10px", height: "10px" }}
+          id="decay"
+        />
+        <div>
+          <div className="flex place-content-between">
+            <div className="text-sm">Decay</div>
+            <div className="text-sm">{decay} s</div>
+          </div>
+          <Slider
+            min={0}
+            max={2}
+            step={0.01}
+            defaultValue={[decay]}
+            onValueChange={(num) => setDecay(num[0])}
+            className="nodrag w-52 mt-2"
+          />
+        </div>
       </div>
-      <TargetHandle
-        type="target"
-        position={Position.Left}
-        style={{ top: "70%" }}
-        id="sustain"
-      />
-      <div
-        style={{ top: "70%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        S
+      <div className="">
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: "81%", width: "10px", height: "10px" }}
+          id="sustain"
+        />
+        <div>
+          <div className="flex place-content-between">
+            <div className="text-sm">Sustain</div>
+            <div className="text-sm">{Math.round(sustain * 100)} %</div>
+          </div>
+          <Slider
+            min={0}
+            max={1}
+            step={0.01}
+            defaultValue={[sustain]}
+            onValueChange={(num) => setSustain(num[0])}
+            className="nodrag w-52 mt-2"
+          />
+        </div>
       </div>
-      <TargetHandle
-        type="target"
-        position={Position.Left}
-        style={{ top: "90%" }}
-        id="release"
-      />
-      <div
-        style={{ top: "90%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        R
+      <div className="my-4">
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ top: "93%", width: "10px", height: "10px" }}
+          id="release"
+        />
+        <div>
+          <div className="flex place-content-between">
+            <div className="text-sm">Release</div>
+            <div className="text-sm">{release} s</div>
+          </div>
+          <Slider
+            min={0}
+            max={2}
+            step={0.01}
+            defaultValue={[release]}
+            onValueChange={(num) => setRelease(num[0])}
+            className="nodrag w-52 mt-2"
+          />
+        </div>
       </div>
-
       {/* Output handle */}
-      <Handle type="source" position={Position.Right} id="component" />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ top: "25%", width: "10px", height: "10px", marginTop: "0" }}
+        id="component"
+      />
       <div className="my-label">{label}</div>
     </div>
   );

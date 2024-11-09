@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import "../styles.css";
-import { useStore, StoreState } from "../store";
+import { useStore, StoreState } from "../utils/store";
 import { shallow } from "zustand/shallow";
 
 const selector = (store: StoreState) => ({

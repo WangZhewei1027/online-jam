@@ -5,8 +5,15 @@
     @apply border-gray-500;
 }
 
+.style-node {
+    @apply px-4 py-6 rounded shadow-md backdrop-blur-[2px] border inline-flex flex-col;
+}
+.style-node-selected {
+    @apply border-gray-500;
+}
+
 .my-label{
-    @apply absolute left-0 -top-3 text-[8px]
+    @apply absolute left-0 -top-10 text-base
 }
 
 .my-menu{

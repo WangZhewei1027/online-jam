@@ -1,6 +1,13 @@
 "use client";
 import { use, useEffect, useRef, useState } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  NodeProps,
+  useConnection,
+  useNodesData,
+  useEdges,
+} from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
@@ -10,7 +17,7 @@ import {
   getHandleConnections,
   getNodeData,
   updateNode,
-} from "../store";
+} from "../utils/store";
 import { shallow } from "zustand/shallow";
 import {
   DropdownMenu,
@@ -31,7 +38,10 @@ function Oscillator({
   data: { label, type = "sine" },
   selected,
 }: NodeProps & { data: { label: string; type: string } }) {
-  const store = useStore(selector, shallow);
+  //const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+  console.log(id, " rendered");
 
   //---------- 获取frequency输入端口的连接信息 ----------
   const [frequency, setFrequency] = useState(0);

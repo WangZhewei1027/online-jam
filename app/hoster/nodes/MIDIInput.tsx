@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  NodeProps,
+  useEdges,
+  useNodesData,
+} from "@xyflow/react";
 import "../styles.css";
 import {
   useStore,
@@ -8,7 +14,7 @@ import {
   getHandleConnections,
   getNodeData,
   updateNode,
-} from "../store";
+} from "../utils/store";
 import { shallow } from "zustand/shallow";
 import { PiPianoKeys } from "react-icons/pi";
 import { BsLightbulbFill } from "react-icons/bs"; // 灯泡图标
@@ -51,7 +57,10 @@ interface MIDIInputProps extends NodeProps {
 }
 
 function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
-  const store = useStore(selector, shallow);
+  //const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+  console.log(id, " rendered");
 
   // Add state for octave offset and light bulb state
   const [octaveOffset, setOctaveOffset] = useState(0);

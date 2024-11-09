@@ -3,9 +3,9 @@ import { useEffect } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import TargetHandle from "./TargetHandle";
 import "../styles.css";
-import { useStore, StoreState } from "../store";
+import { useStore, StoreState } from "../utils/store";
 import { shallow } from "zustand/shallow";
-import { getSourceData, useConnectionData } from "../utils";
+import { getSourceData, useConnectionData } from "../utils/utils";
 
 // Store selector to subscribe to all necessary store properties
 const selector = (store: StoreState) => ({

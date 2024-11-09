@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  NodeProps,
+  useEdges,
+  useNodesData,
+} from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
@@ -10,7 +16,7 @@ import {
   getHandleConnections,
   getNodeData,
   updateNode,
-} from "../store";
+} from "../utils/store";
 import { shallow } from "zustand/shallow";
 
 const selector = (store: StoreState) => ({
@@ -26,7 +32,9 @@ interface GainNodeProps extends NodeProps {
 }
 
 const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
-  const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+  console.log(id, " rendered");
 
   // ---------- 处理audio input的逻辑 ---------- //
   const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
