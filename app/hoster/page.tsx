@@ -1,6 +1,7 @@
 "use client";
 
 import * as Tone from "tone";
+import dynamic from "next/dynamic";
 import {
   Popover,
   PopoverContent,
@@ -49,7 +50,7 @@ const selector = (store: StoreState) => ({
   onReconnectEnd: store.onReconnectEnd,
 });
 
-export default function Page() {
+function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
   const [roomName, setRoomName] = useState("");
   const [url, setUrl] = useState("");
@@ -292,3 +293,7 @@ export default function Page() {
     </>
   );
 }
+
+export default dynamic(() => Promise.resolve(Page), {
+  ssr: false,
+});
