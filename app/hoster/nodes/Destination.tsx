@@ -124,6 +124,10 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
     if (desRef.current) {
       desRef.current.volume.value = volumn <= -30 ? -Infinity : volumn;
     }
+
+    if (Tone.getContext().state === "suspended") {
+      Tone.start();
+    }
   }, [volumn]);
 
   return (
