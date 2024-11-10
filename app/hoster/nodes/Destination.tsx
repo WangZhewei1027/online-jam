@@ -43,22 +43,24 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   const desRef = useRef<DestinationClass | null>(null);
 
   useEffect(() => {
-    // 初始化目的地，确保只执行一次
     if (!desRef.current) {
       desRef.current = Tone.getDestination();
     }
 
     return () => {
-      // 组件卸载时清理目的地连接
-      if (audioComponent.current) {
+      if (
+        audioComponent.current &&
+        audioComponent.current instanceof Tone.ToneAudioNode &&
+        typeof audioComponent.current.disconnect === "function"
+      ) {
         try {
           audioComponent.current.disconnect(Tone.getDestination());
-          audioComponent.current = null;
         } catch (error) {
           console.error("Error during cleanup disconnection:", error);
         }
       }
-      desRef.current = null; // 确保 desRef 也被清空
+      audioComponent.current = null; // 清空引用
+      desRef.current = null; // 清空目标节点引用
     };
   }, []);
 
@@ -83,19 +85,37 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
         // 如果音频源是 ToneAudioNode，则连接
         if (audioComponent.current !== audioSourceNodeData) {
           // 防止重复连接相同的节点
-          audioComponent.current?.disconnect(desRef.current);
-          audioComponent.current = audioSourceNodeData;
-          audioComponent.current.connect(desRef.current);
+          try {
+            try {
+              audioComponent.current?.disconnect(desRef.current);
+              console.log("disconnect previous node");
+            } catch (e) {
+              console.error("disconnect previous node error", e);
+            }
+            audioComponent.current = audioSourceNodeData;
+            audioComponent.current.connect(desRef.current);
+          } catch (e) {
+            console.error("error 1", e);
+          }
         }
       } else if (audioComponent.current) {
         // 如果音频源不是 ToneAudioNode，则断开连接
-        if (
-          "disconnect" in audioComponent.current &&
-          typeof audioComponent.current.disconnect === "function"
-        ) {
-          audioComponent.current.disconnect(desRef.current);
+        try {
+          if (
+            "disconnect" in audioComponent.current &&
+            typeof audioComponent.current.disconnect === "function"
+          ) {
+            console.log("audioComponent.current:", audioComponent.current);
+            console.log("desRef.current:", desRef.current);
+            audioComponent.current.disconnect(desRef.current);
+          }
+          audioComponent.current = null;
+        } catch (e) {
+          // 这个错误因为异步的原因可能是不可避免的
+          console.error("error 2", e);
+          console.log("AudioContext state:", Tone.context.state);
+          // console.log("Tone.js nodes:", Tone.context._nodes);
         }
-        audioComponent.current = null;
       }
     }
   }, [audioSourceNodeData]); // 依赖于音频源数据
