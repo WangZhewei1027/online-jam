@@ -5,8 +5,8 @@ import * as Tone from "tone";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/spinner";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
+import { MdPlayArrow } from "react-icons/md";
+import { MdOutlinePause } from "react-icons/md";
 import {
   getRoomId,
   fetchSequencerData,

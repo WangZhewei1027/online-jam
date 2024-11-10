@@ -10,13 +10,7 @@ import {
 import "../styles.css";
 import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
-import {
-  useStore,
-  StoreState,
-  getHandleConnections,
-  getNodeData,
-  updateNode,
-} from "../utils/store";
+import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import { Slider } from "@/components/ui/slider";
 
 interface GainNodeProps extends NodeProps {

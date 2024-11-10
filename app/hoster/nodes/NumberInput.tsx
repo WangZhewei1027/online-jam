@@ -1,21 +1,16 @@
 "use client";
 import { useCallback, useState } from "react";
-import { Handle, Position, useReactFlow, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  useReactFlow,
+  NodeProps,
+  useEdges,
+  useNodesData,
+} from "@xyflow/react";
 import "../styles.css";
 
-import {
-  useStore,
-  StoreState,
-  getHandleConnections,
-  getNodeData,
-  updateNode,
-} from "../utils/store";
-import { shallow } from "zustand/shallow";
-
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-});
+import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
 function NumberInput({
   id,
@@ -23,9 +18,10 @@ function NumberInput({
   selected,
   ...props
 }: NodeProps & { data: { label: string; output: number } }) {
-  const [number, setNumber] = useState<number>(output);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
 
-  const store = useStore(selector, shallow);
+  const [number, setNumber] = useState<number>(output);
 
   const onChange = useCallback((evt: any) => {
     const newValue = evt.target.value;
@@ -37,17 +33,17 @@ function NumberInput({
   }, []);
 
   return (
-    <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
+    <div className={`style-node ${selected ? "style-node-selected" : ""} w-32`}>
       <input
         id={`number-${id}`}
         name="number"
         type="number"
         onChange={onChange}
-        className="nodrag flex h-5 w-16 rounded-md border border-input bg-transparent px-3 py-1 text-[10px] shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        className="nodrag rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         value={number}
       />
       <Handle type="source" position={Position.Right} id="output" />
-      <div className="my-label">{label}</div>
+      <div className="absolute left-0 -top-6 text-base">{label}</div>
     </div>
   );
 }

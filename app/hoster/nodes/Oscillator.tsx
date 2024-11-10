@@ -1,24 +1,15 @@
 "use client";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Handle,
   Position,
   NodeProps,
-  useConnection,
   useNodesData,
   useEdges,
 } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
-import TargetHandle from "./TargetHandle";
-import {
-  useStore,
-  StoreState,
-  getHandleConnections,
-  getNodeData,
-  updateNode,
-} from "../utils/store";
-import { shallow } from "zustand/shallow";
+import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Slider } from "@/components/ui/slider";
-import SineWave from "../components/SinWave";
-import Waveform from "../components/WaveForm";
+import Waveform from "../components/Waveform";
 
 function Oscillator({
   id,

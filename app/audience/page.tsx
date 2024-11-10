@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import QrCodeIcon from "@mui/icons-material/QrCode";
+import { MdQrCode } from "react-icons/md";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import {
@@ -58,7 +58,7 @@ export default function Page() {
                 onClick={handleQRCodeClick}
                 className="h-10 w-10 ml-4"
               >
-                <QrCodeIcon />
+                <MdQrCode />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px]">

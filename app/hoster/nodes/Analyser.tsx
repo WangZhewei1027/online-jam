@@ -141,9 +141,7 @@ const Analyser = ({
   }, []);
 
   return (
-    <div
-      className={`my-node ${selected ? "my-node-selected" : ""} w-[200px] h-[100px]`}
-    >
+    <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
       {/* 输入与输出句柄 */}
       <Handle type="target" position={Position.Left} id="input" />
       <Handle type="source" position={Position.Right} id="value" />

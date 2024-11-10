@@ -13,7 +13,7 @@
 }
 
 .my-label{
-    @apply absolute left-0 -top-10 text-base
+    @apply absolute left-0 -top-6 text-base
 }
 
 .my-menu{

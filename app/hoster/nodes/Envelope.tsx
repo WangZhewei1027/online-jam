@@ -243,7 +243,7 @@ const Envelope = ({
         style={{ top: "25%", width: "10px", height: "10px", marginTop: "0" }}
         id="component"
       />
-      <div className="my-label">{label}</div>
+      <div className="my-label !-top-10">{label}</div>
     </div>
   );
 };
