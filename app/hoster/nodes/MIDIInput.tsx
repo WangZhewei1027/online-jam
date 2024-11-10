@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Handle,
   Position,
@@ -69,7 +69,7 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   const [isLightOn, setIsLightOn] = useState(false); // 灯泡状态
 
   // 用于记录已按下的键，避免重复触发 keydown
-  const pressedKeys = new Set<string>();
+  const pressedKeysRef = useRef(new Set<string>());
 
   // Handle keyboard events to simulate MIDI input
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -77,8 +77,8 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
     let midiNote = null;
 
     // 检查是否已经记录按下的键，若已记录则跳过处理
-    if (pressedKeys.has(key)) return;
-    pressedKeys.add(key); // 添加到 pressedKeys 集合
+    if (pressedKeysRef.current.has(key)) return;
+    pressedKeysRef.current.add(key); // 添加到 pressedKeys 集合
 
     const isMac = navigator.platform.toUpperCase().includes("MAC");
 
@@ -115,6 +115,7 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
       if (triggerSourceNodeData.length > 0) {
         triggerSourceNodeData.forEach((component) => {
           if (
+            component &&
             "triggerAttack" in component &&
             typeof component.triggerAttack === "function"
           ) {
@@ -127,9 +128,9 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   };
 
   // 处理 keyup 事件，在松开按键时熄灭灯泡
-  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+  const handleKeyUp = (event: KeyboardEvent) => {
     const key = event.key.toLowerCase();
-    pressedKeys.delete(key); // 从 pressedKeys 集合中移除键
+    pressedKeysRef.current.delete(key); // 从 pressedKeys 集合中移除键
 
     setIsLightOn(false);
     //updateNode(id, { trigger: "triggerRelease" });
@@ -137,6 +138,7 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
     if (triggerSourceNodeData.length > 0) {
       triggerSourceNodeData.forEach((component) => {
         if (
+          component &&
           "triggerRelease" in component &&
           typeof component.triggerRelease === "function"
         ) {
@@ -145,7 +147,7 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
         }
       });
     }
-  }, []);
+  };
 
   const midiToFrequency = (midiNote: number): number =>
     440 * Math.pow(2, (midiNote - 69) / 12);
