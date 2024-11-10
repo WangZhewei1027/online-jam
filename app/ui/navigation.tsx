@@ -76,7 +76,7 @@ const Navbar = () => {
                     onClick={toggleDrawer}
                     className="right-4"
                   >
-                    <MdMenu />
+                    <MdMenu className="h-8 w-8" />
                   </Button>
                 </DrawerTrigger>
                 <DrawerContent>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Handle,
   Position,
@@ -9,7 +9,8 @@ import {
 } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
-import { HiOutlineSpeakerWave } from "react-icons/hi2";
+import { VscUnmute } from "react-icons/vsc";
+import { VscMute } from "react-icons/vsc";
 import {
   useStore,
   StoreState,
@@ -22,6 +23,7 @@ import {
   isFunctionalNode,
 } from "../utils/tone";
 import { DestinationClass } from "tone/build/esm/core/context/Destination";
+import { Slider } from "@/components/ui/slider";
 
 interface DestinationProps extends NodeProps {
   data: {
@@ -34,6 +36,8 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
   console.log(id, " rendered");
+
+  const [volumn, setVolumn] = useState(0);
 
   // ---------- 处理destination的逻辑 ---------- //
   const desRef = useRef<DestinationClass | null>(null);
@@ -96,11 +100,44 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
     }
   }, [audioSourceNodeData]); // 依赖于音频源数据
 
+  useEffect(() => {
+    if (desRef.current) {
+      desRef.current.volume.value = volumn <= -30 ? -Infinity : volumn;
+    }
+  }, [volumn]);
+
   return (
-    <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
-      <Handle type="target" position={Position.Left} id="destination" />
-      <HiOutlineSpeakerWave className="my-icon" />
-      <div className="my-label">{label}</div>
+    <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="destination"
+        style={{ width: "10px", height: "10px" }}
+      />
+      <div className="flex flex-col items-center">
+        {volumn > -30 ? (
+          <VscUnmute className="my-icon w-8 h-8" />
+        ) : (
+          <VscMute className="w-8 h-8" />
+        )}
+        <div className="mt-4">
+          <div className="flex place-content-between">
+            <div className="text-sm">Volumn</div>
+            <div className="text-sm">
+              {volumn > -30 ? volumn.toFixed(1) : "-∞"} db
+            </div>
+          </div>
+          <Slider
+            min={-30}
+            max={0}
+            step={0.1}
+            defaultValue={[0]}
+            onValueChange={(num) => setVolumn(num[0])}
+            className="nodrag w-32 mt-2"
+          />
+        </div>
+      </div>
+      <div className="absolute left-0 -top-6 text-base">{label}</div>
     </div>
   );
 };

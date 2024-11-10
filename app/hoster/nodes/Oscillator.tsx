@@ -27,18 +27,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-});
+import { Slider } from "@/components/ui/slider";
+import SineWave from "../components/SinWave";
+import Waveform from "../components/WaveForm";
 
 function Oscillator({
   id,
   data: { label, type = "sine" },
   selected,
 }: NodeProps & { data: { label: string; type: string } }) {
-  //const store = useStore(selector, shallow);
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
   console.log(id, " rendered");
@@ -87,85 +84,89 @@ function Oscillator({
     };
   }, []); // 仅在初次渲染时执行
 
-  // const [waveType, setWaveType] = useState<Tone.ToneOscillatorType>(
-  //   type as Tone.ToneOscillatorType
-  // ); // Set initial wave type
-  // const oscRef = useRef<Tone.Oscillator | null>(null); // Oscillator reference
+  //---------- 操作wave type ----------
+  const [waveType, setWaveType] = useState<Tone.ToneOscillatorType>(
+    type as Tone.ToneOscillatorType
+  ); // Set initial wave type
 
-  // const frequencyConnection = getHandleConnections(id, "target", "frequency");
-  // const frequencySourceNodeData =
-  //   frequencyConnection.length > 0
-  //     ? getNodeData(frequencyConnection[0].source)
-  //     : null;
-  // const frequency: number = frequencySourceNodeData?.frequency ?? 0;
+  // Initialize oscillator and clean up
+  useEffect(() => {
+    if (!oscRef.current) {
+      oscRef.current = new Tone.Oscillator(0, waveType);
+      oscRef.current.start();
+    }
+    updateNode(id, { component: oscRef.current });
 
-  // // Initialize oscillator and clean up
-  // useEffect(() => {
-  //   if (!oscRef.current) {
-  //     oscRef.current = new Tone.Oscillator(0, waveType);
-  //     oscRef.current.start();
-  //   }
-  //   updateNode(id, { component: oscRef.current });
+    return () => {
+      if (oscRef.current) {
+        oscRef.current.stop();
+        oscRef.current.dispose();
+      }
+      console.log("Oscillator disposed");
+    };
+  }, []); // Only run on mount and unmount
 
-  //   return () => {
-  //     if (oscRef.current) {
-  //       oscRef.current.stop();
-  //       oscRef.current.dispose();
-  //     }
-  //     console.log("Oscillator disposed");
-  //   };
-  // }, []); // Only run on mount and unmount
+  // Update frequency
+  useEffect(() => {
+    if (oscRef.current) {
+      oscRef.current.frequency.rampTo(frequency, 0);
+    }
+  }, [frequency]);
 
-  // // Update frequency
-  // useEffect(() => {
-  //   if (oscRef.current) {
-  //     oscRef.current.frequency.rampTo(frequency, 0);
-  //   }
-  // }, [frequency]);
-
-  // // Update wave type
-  // useEffect(() => {
-  //   if (
-  //     oscRef.current &&
-  //     ["sine", "square", "triangle", "sawtooth"].includes(waveType)
-  //   ) {
-  //     oscRef.current.type = waveType;
-  //     store.updateNode(id, { type: waveType });
-  //     console.log("Wave type set to", waveType);
-  //   }
-  // }, [waveType]);
+  // Update wave type
+  useEffect(() => {
+    if (
+      oscRef.current &&
+      ["sine", "square", "triangle", "sawtooth"].includes(waveType)
+    ) {
+      oscRef.current.type = waveType;
+      updateNode(id, { type: waveType });
+      console.log("Wave type set to", waveType);
+    }
+  }, [waveType]);
 
   return (
-    <div
-      className={`my-node ${
-        selected ? "my-node-selected" : ""
-      } w-[64px] h-[64px]`}
-    >
+    <div className={`style-node ${selected ? "style-node-selected" : ""} w-56`}>
+      <div className="w-full h-36">
+        {/* <SineWave frequency={frequency} /> */}
+        <Waveform
+          frequency={frequency}
+          waveform={waveType as "sine" | "sawtooth" | "square" | "triangle"}
+        />
+      </div>
+      {/* <div className="mt-4">
+        <div>
+          <div className="flex place-content-between">
+            <div className="text-sm">Sustain</div>
+            <div className="text-sm">100 %</div>
+          </div>
+          <Slider min={0} max={1} step={0.01} className="nodrag mt-2" />
+        </div>
+      </div> */}
       {/* Frequency input handle */}
       <Handle
         id="frequency"
         type="target"
         position={Position.Left}
-        style={{ top: "30%" }}
+        style={{ top: "40%", width: "10px", height: "10px" }}
       />
-      <div className="absolute text-[6px] font-bold top-[30%] left-1 -translate-y-1/2">
+      {/* <div className="absolute text-[6px] font-bold top-[30%] left-1 -translate-y-1/2">
         <div>Frequency</div>
         <div>{frequency} Hz</div>
-      </div>
-
+      </div> */}
       {/* Wave type dropdown */}
-      <Handle
+      {/* <Handle
         id="type"
         type="target"
         position={Position.Left}
         style={{ top: "70%" }}
-      />
-      <div className="absolute text-[6px] font-bold top-[70%] left-1 -translate-y-1/2">
-        <div>Type</div>
-        {/* <div>
+      /> */}
+      <div className="flex place-content-between mt-4">
+        <div className="text-sm">Wave Type</div>
+        <div>
           <DropdownMenu>
-            <DropdownMenuTrigger className="border">
-              {waveType}
+            <DropdownMenuTrigger className="text-sm underline italic">
+              {waveType.charAt(0).toUpperCase() + waveType.slice(1)}
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>Wave Type</DropdownMenuLabel>
@@ -180,14 +181,17 @@ function Oscillator({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-        </div> */}
+        </div>
       </div>
-
       {/* Oscillator output handle */}
-      <Handle type="source" position={Position.Right} id="component" />
-
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="component"
+        style={{ top: "40%", width: "10px", height: "10px" }}
+      />
       {/* Display label */}
-      <div className="my-label">{label}</div>
+      <div className="absolute left-0 -top-6 text-base">{label}</div>
     </div>
   );
 }

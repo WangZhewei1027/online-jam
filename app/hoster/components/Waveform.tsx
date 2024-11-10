@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const SineWave = ({ frequency }: { frequency: number }) => {
+const Waveform = ({
+  frequency,
+  waveform,
+}: {
+  frequency: number;
+  waveform: "sine" | "square" | "triangle" | "sawtooth";
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 300, height: 100 });
 
@@ -38,8 +44,8 @@ const SineWave = ({ frequency }: { frequency: number }) => {
 
   const { width, height } = dimensions;
 
-  // Generate sine wave path
-  const generateSineWavePath = (): string => {
+  // Generate path for the selected waveform
+  const generateWaveformPath = (): string => {
     const amplitude = height / 2 - 10; // Wave amplitude
     const centerY = height / 2; // Vertical center
     const points = 100; // Number of points to render
@@ -49,7 +55,35 @@ const SineWave = ({ frequency }: { frequency: number }) => {
 
     for (let i = 0; i <= points; i++) {
       const x = i * step;
-      const y = centerY + amplitude * Math.sin((x * 2 * Math.PI) / wavelength);
+      let y = centerY;
+
+      // Compute y based on waveform type
+      const phase = (x * 2 * Math.PI) / wavelength;
+      switch (waveform) {
+        case "sine":
+          y = centerY + amplitude * Math.sin(phase);
+          break;
+        case "square":
+          y =
+            phase % (2 * Math.PI) < Math.PI
+              ? centerY - amplitude
+              : centerY + amplitude;
+          break;
+        case "triangle":
+          y = centerY + amplitude * (2 / Math.PI) * Math.asin(Math.sin(phase));
+          break;
+        case "sawtooth":
+          y =
+            centerY +
+            amplitude *
+              (2 *
+                (phase / (2 * Math.PI) -
+                  Math.floor(phase / (2 * Math.PI) + 0.5)));
+          break;
+        default:
+          y = centerY;
+      }
+
       path += ` L${x},${y}`;
     }
 
@@ -64,12 +98,10 @@ const SineWave = ({ frequency }: { frequency: number }) => {
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
       >
-        {/* Background grid (optional) */}
         <rect width="100%" height="100%" fill="transparent" />
-        {/* Sine wave */}
         <path
-          d={generateSineWavePath()}
-          stroke="#000"
+          d={generateWaveformPath()}
+          stroke="#171717"
           strokeWidth="2"
           fill="none"
         />
@@ -78,4 +110,4 @@ const SineWave = ({ frequency }: { frequency: number }) => {
   );
 };
 
-export default SineWave;
+export default Waveform;

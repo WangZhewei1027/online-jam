@@ -137,28 +137,29 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   }, [handleKeyDown, handleKeyUp]);
 
   return (
-    <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
-      <div className="flex items-center">
-        <PiPianoKeys />
-        {/* 灯泡图标，根据 isLightOn 状态调整颜色 */}
-        <BsLightbulbFill
-          className={`ml-2 ${isLightOn ? "text-yellow-400" : "text-gray-300"}`}
-        />
-      </div>
-      <div className="text-[8px] text-center mt-1">{octaveOffset}</div>
+    <div
+      className={`style-node ${selected ? "style-node-selected" : ""} w-24 items-center`}
+    >
+      <div className="text-sm text-center">{octaveOffset}</div>
+      <PiPianoKeys className="h-8 w-8" />
+      <div
+        className={`rounded-full border-2 w-3 h-3 mt-2 ${isLightOn ? "bg-green-500" : ""}`}
+        style={{ backgroundColor: `islightOn ? "yellow" : "gray"` }}
+      ></div>
+
       <Handle
         type="source"
         position={Position.Right}
-        style={{ top: "30%" }}
+        style={{ top: "30%", width: "10px", height: "10px" }}
         id="midi"
       />
       <Handle
         type="source"
         position={Position.Right}
-        style={{ top: "70%" }}
+        style={{ top: "75%", width: "10px", height: "10px" }}
         id="trigger"
       />
-      <div className="my-label">{data.label}</div>
+      <div className="absolute left-0 -top-6 text-base">{data.label}</div>
     </div>
   );
 }

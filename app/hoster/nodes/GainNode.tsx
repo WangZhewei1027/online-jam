@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Handle,
   Position,
@@ -17,12 +17,7 @@ import {
   getNodeData,
   updateNode,
 } from "../utils/store";
-import { shallow } from "zustand/shallow";
-
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-});
+import { Slider } from "@/components/ui/slider";
 
 interface GainNodeProps extends NodeProps {
   data: {
@@ -35,6 +30,8 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
   console.log(id, " rendered");
+
+  const [gain, setGain] = useState(1);
 
   // ---------- 处理audio input的逻辑 ---------- //
   const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
@@ -128,44 +125,47 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   }, [audioSourceNodeData, gainRef.current, audioComponent.current]);
 
   return (
-    <div
-      className={`my-node ${
-        selected ? "my-node-selected" : ""
-      } w-[48px] h-[48px]`}
-    >
+    <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
+      <div className="mt-6">
+        <div className="flex place-content-between">
+          <div className="text-sm">Gain</div>
+          <div className="text-sm">{(gain * 100).toFixed(0)} %</div>
+        </div>
+        <Slider
+          min={0}
+          max={3}
+          step={0.01}
+          defaultValue={[1]}
+          onValueChange={(num) => setGain(num[0])}
+          className="nodrag w-32 mt-2"
+        />
+      </div>
       {/* 音频输入句柄 */}
       <TargetHandle
         type="target"
         position={Position.Left}
-        style={{ top: "30%" }}
+        style={{ top: "25%", width: "10px", height: "10px" }}
         id="audio"
       />
-      <div
-        style={{ top: "30%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        Input
-      </div>
 
       {/* Gain 值输入句柄 */}
-      <TargetHandle
+      <Handle
         type="target"
         position={Position.Left}
         id="gain"
-        style={{ top: "70%" }}
+        style={{ top: "74%", width: "10px", height: "10px" }}
       />
-      <div
-        style={{ top: "70%" }}
-        className="absolute text-[6px] font-bold left-1 -translate-y-1/2"
-      >
-        Gain
-      </div>
 
       {/* 输出句柄 */}
-      <Handle type="source" position={Position.Right} id="component" />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ width: "10px", height: "10px" }}
+        id="component"
+      />
 
       {/* 显示标签 */}
-      <div className="my-label">{label}</div>
+      <div className="absolute left-0 -top-6 text-base">{label}</div>
     </div>
   );
 };
