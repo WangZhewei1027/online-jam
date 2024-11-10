@@ -1,3 +1,4 @@
+"use client";
 import * as Tone from "tone";
 
 // // 判断是否可以连接到 Destination 的节点类型

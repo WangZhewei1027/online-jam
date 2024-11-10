@@ -1,4 +1,4 @@
-// hooks/useNodes.ts
+"use client";
 import { nanoid } from "nanoid";
 import { useStore } from "../utils/store";
 
