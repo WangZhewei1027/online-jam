@@ -7,24 +7,16 @@ import {
   useHandleConnections,
   useNodesData,
   useReactFlow,
+  useEdges,
 } from "@xyflow/react";
 import "../styles.css";
 import * as Tone from "tone";
-import TargetHandle from "./TargetHandle";
-
-import { useStore, StoreState } from "../utils/store";
-import { shallow } from "zustand/shallow";
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-  useHandleConnections: store.useHandleConnections,
-  useNodesData: store.useNodesData,
-  updateNode: store.updateNode,
-});
+import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
 interface AnalyserProps extends NodeProps {
   data: {
-    component?: Tone.ToneAudioNode; // make sure component is a ToneAudioNode
+    component?: Tone.ToneAudioNode; // 确保 component 是 ToneAudioNode 类型
+    label: string;
   };
 }
 
@@ -33,109 +25,100 @@ const Analyser = ({
   data: { label },
   isConnectable,
   selected,
-}: AnalyserProps & { data: { label: string } }) => {
-  const store = useStore(selector, shallow);
+}: AnalyserProps) => {
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
 
-  const connections = store.useHandleConnections(id, "target", "input");
-  const sourceId = connections?.[0]?.source;
-  const componentNodeData = store.useNodesData(sourceId);
-  const component: Tone.ToneAudioNode | null =
-    sourceId && componentNodeData?.data?.component
-      ? (componentNodeData.data.component as Tone.ToneAudioNode)
+  // -------- 获取 input 输入端口的连接信息 --------
+  const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
+
+  const audioConnection = getHandleConnections(id, "target", "input");
+
+  const audioSourceNodeData =
+    audioConnection.length > 0 && audioConnection[0].sourceHandle
+      ? getNodeData(audioConnection[0].source, audioConnection[0].sourceHandle)
       : null;
 
-  // 使用 useRef 来保持对 component 的持久引用
-  const componentRef = useRef<Tone.ToneAudioNode | null>(null);
+  // -------- 自身的 ref --------
+  const analyserRef = useRef<Tone.Analyser | null>(null);
 
-  const analyserRef = useRef<Tone.Analyser>(
-    new Tone.Analyser("waveform", 1024)
-  );
+  // -------- 缓存音频波形数据 --------
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioRef = useRef<number[]>(new Array(1024).fill(0));
 
-  // Store the waveform value in a ref to prevent re-render
-  const valueRef = useRef<number | null>(null);
-
+  // -------- Tone.Analyser 初始化与清理 --------
   useEffect(() => {
-    const startAudio = async () => {
-      try {
-        // 确保音频上下文已启动
-        await Tone.start();
+    if (!analyserRef.current) {
+      analyserRef.current = new Tone.Analyser("waveform", 1024);
+      updateNode(id, { component: analyserRef.current });
+    }
 
-        // 确保 component 存在后再进行连接操作
-        if (component instanceof Tone.ToneAudioNode) {
-          component.connect(analyserRef.current);
-          componentRef.current = component; // 将 component 存储在 useRef 中
-
-          // 如果 component 是可启动的 Tone.js 音频节点（如 Oscillator），调用 start()
-          if ("start" in component && typeof component.start === "function") {
-            component.start();
-            console.log("Component started");
-          }
-        }
-      } catch (error) {
-        console.error("Error starting audio context or component:", error);
+    return () => {
+      if (analyserRef.current) {
+        analyserRef.current.dispose();
+        analyserRef.current = null;
       }
     };
+  }, []);
 
-    startAudio();
-  }, [component]); // 依赖 component 进行音频操作
-
-  // 监听 connections 的变化，检查连接数是否为 0
+  // -------- 监听 audioSourceNodeData 的变化 --------
   useEffect(() => {
-    if (connections.length < 1 && componentRef.current) {
+    if (analyserRef.current) {
       try {
-        Tone.start();
-        componentRef.current.disconnect(analyserRef.current);
-        console.log("Component disconnected due to no connections");
-        componentRef.current = null; // 清空 ref 以防止后续操作
+        // 如果有新的音频源，断开旧的连接并连接新源
+        if (
+          audioSourceNodeData instanceof Tone.ToneAudioNode &&
+          audioComponent.current !== audioSourceNodeData
+        ) {
+          audioComponent.current?.disconnect(analyserRef.current);
+          audioComponent.current = audioSourceNodeData;
+          audioComponent.current.connect(analyserRef.current);
+        }
       } catch (error) {
-        console.error("Catch error during disconnection");
+        console.error("Error during connection setup:", error);
       }
     }
-  }, [connections]); // 依赖 connections
 
-  useEffect(() => {
     return () => {
-      // 使用 ref 中的 component 来执行清理
-      if (componentRef.current) {
+      if (audioComponent.current && analyserRef.current) {
         try {
-          componentRef.current.disconnect(Tone.getDestination());
-          console.log("Component disconnected from destination");
-          componentRef.current = null; // 确保清理后 ref 为空
+          audioComponent.current.disconnect(analyserRef.current);
         } catch (error) {
           console.error("Error during cleanup disconnection:", error);
         }
+        audioComponent.current = null;
       }
     };
-  }, []); // 依赖数组为空，清理只在卸载时运行
+  }, [audioSourceNodeData]);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioRef = useRef(new Array(1024).fill(0));
-
+  // -------- 监听 Canvas 绘图 --------
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    if (!canvas) {
-      return;
-    }
-    const ctx = canvas.getContext("2d")!;
-    if (!ctx) {
-      return;
-    }
-    canvas.width = 600;
-    canvas.height = 300;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationId: number;
 
     const drawWaveform = () => {
-      requestAnimationFrame(drawWaveform);
+      animationId = requestAnimationFrame(drawWaveform);
 
+      if (!analyserRef.current) return;
       const waveform = analyserRef.current.getValue();
 
+      // 清除画布
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // 绘制波形
       ctx.beginPath();
       ctx.moveTo(0, canvas.height / 2);
+
       for (let i = audioRef.current.length - 1; i > 0; i--) {
         audioRef.current[i] = audioRef.current[i - 1];
       }
-      audioRef.current[0] = waveform[0];
+      audioRef.current[0] = waveform[0] as number;
+
       for (let i = 0; i < audioRef.current.length; i++) {
         const x = (i / audioRef.current.length) * canvas.width;
         const y = ((1 + audioRef.current[i]) * canvas.height) / 2;
@@ -146,37 +129,25 @@ const Analyser = ({
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Update valueRef instead of triggering a re-render
-      valueRef.current = waveform[0] as number;
+      // 更新节点值
+      updateNode(id, { value: waveform[0] });
     };
 
     drawWaveform();
 
     return () => {
-      // 清理时停止振荡器
-      // if (componentRef.current) {
-      //   componentRef.current.stop();
-      // }
+      cancelAnimationFrame(animationId);
     };
-  }, [canvasRef.current]);
-
-  // Throttle or debounce the updateNodeData to prevent frequent React updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (valueRef.current !== null) {
-        store.updateNode(id, { value: valueRef.current });
-      }
-    }, 50); // Update every 500ms
-
-    return () => clearInterval(interval); // Cleanup on component unmount
-  }, [id]);
+  }, []);
 
   return (
     <div
       className={`my-node ${selected ? "my-node-selected" : ""} w-[200px] h-[100px]`}
     >
-      <TargetHandle type="target" position={Position.Left} id="input" />
+      {/* 输入与输出句柄 */}
+      <Handle type="target" position={Position.Left} id="input" />
       <Handle type="source" position={Position.Right} id="value" />
+      {/* Canvas 显示波形 */}
       <canvas ref={canvasRef} className="oscilloscope w-full h-full" />
       <div className="my-label">{label}</div>
     </div>

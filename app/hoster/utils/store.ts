@@ -11,6 +11,7 @@ import {
 } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { createWithEqualityFn } from "zustand/traditional";
+import { create } from "zustand";
 
 import Oscillator from "../nodes/Oscillator";
 import RGBLight from "../nodes/RGBLight";
@@ -318,3 +319,15 @@ export const getHandleConnections = useStore.getState().getHandleConnections;
 export const getNodeData = useStore.getState().getNodeData;
 
 export const updateNode = useStore.getState().updateNode;
+
+// HMR 配置
+declare const module: any;
+if (module.hot) {
+  module.hot.accept();
+  module.hot.dispose((data: { state: StoreState }) => {
+    data.state = useStore.getState(); // 保存状态
+  });
+  if (module.hot.data?.state) {
+    useStore.setState(module.hot.data.state); // 恢复状态
+  }
+}

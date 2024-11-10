@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import {
   Handle,
   Position,
@@ -32,6 +32,7 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   console.log(id, " rendered");
 
   const [gain, setGain] = useState(1);
+  const [disabled, setDisabled] = useState(false);
 
   // ---------- 处理audio input的逻辑 ---------- //
   const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
@@ -103,6 +104,12 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
     };
   }, [gainSourceData, gainRef.current, gainInputRef.current]);
 
+  useEffect(() => {
+    if (gainRef.current) {
+      gainRef.current.gain.rampTo(gain, 0.01);
+    }
+  }, [gain]);
+
   // 处理音频组件的连接
   useEffect(() => {
     if (gainRef.current) {
@@ -124,12 +131,22 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
     return () => {};
   }, [audioSourceNodeData, gainRef.current, audioComponent.current]);
 
+  useEffect(() => {
+    if (gainInputRef.current instanceof Tone.Envelope) {
+      setDisabled(true);
+    } else {
+      setDisabled(false);
+    }
+  }, [gainInputRef.current]);
+
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
       <div className="mt-6">
         <div className="flex place-content-between">
           <div className="text-sm">Gain</div>
-          <div className="text-sm">{(gain * 100).toFixed(0)} %</div>
+          <div className="text-sm">
+            {disabled ? "-" : (gain * 100).toFixed(0)} %
+          </div>
         </div>
         <Slider
           min={0}
@@ -137,7 +154,8 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
           step={0.01}
           defaultValue={[1]}
           onValueChange={(num) => setGain(num[0])}
-          className="nodrag w-32 mt-2"
+          className="nodrag w-32 mt-2 data-[disabled]:opacity-50"
+          disabled={disabled}
         />
       </div>
       {/* 音频输入句柄 */}
