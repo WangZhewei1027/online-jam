@@ -18,6 +18,8 @@ import {
 import { shallow } from "zustand/shallow";
 import { PiPianoKeys } from "react-icons/pi";
 import { BsLightbulbFill } from "react-icons/bs"; // 灯泡图标
+import { get } from "http";
+import * as Tone from "tone";
 
 // Store selector to subscribe to all necessary store properties
 const selector = (store: StoreState) => ({
@@ -70,49 +72,59 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   const pressedKeys = new Set<string>();
 
   // Handle keyboard events to simulate MIDI input
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
-      let midiNote = null;
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    let midiNote = null;
 
-      // 检查是否已经记录按下的键，若已记录则跳过处理
-      if (pressedKeys.has(key)) return;
-      pressedKeys.add(key); // 添加到 pressedKeys 集合
+    // 检查是否已经记录按下的键，若已记录则跳过处理
+    if (pressedKeys.has(key)) return;
+    pressedKeys.add(key); // 添加到 pressedKeys 集合
 
-      const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
 
-      // 忽略保存快捷键
-      if (
-        (isMac && event.metaKey && key === "s") ||
-        (!isMac && event.ctrlKey && key === "s")
-      ) {
-        return;
-      }
+    // 忽略保存快捷键
+    if (
+      (isMac && event.metaKey && key === "s") ||
+      (!isMac && event.ctrlKey && key === "s")
+    ) {
+      return;
+    }
 
-      if (key === "z") {
-        setOctaveOffset((prev) => Math.max(prev - 1, -2)); // Minimum offset -2
-      } else if (key === "x") {
-        setOctaveOffset((prev) => Math.min(prev + 1, 2)); // Maximum offset +2
-      } else if (whiteKeys[key]) {
-        midiNote = whiteKeys[key] + octaveOffset * 12;
-      } else if (blackKeys[key]) {
-        midiNote = blackKeys[key] + octaveOffset * 12;
-      }
+    if (key === "z") {
+      setOctaveOffset((prev) => Math.max(prev - 1, -2)); // Minimum offset -2
+    } else if (key === "x") {
+      setOctaveOffset((prev) => Math.min(prev + 1, 2)); // Maximum offset +2
+    } else if (whiteKeys[key]) {
+      midiNote = whiteKeys[key] + octaveOffset * 12;
+    } else if (blackKeys[key]) {
+      midiNote = blackKeys[key] + octaveOffset * 12;
+    }
 
-      if (midiNote !== null) {
-        const frequency = midiToFrequency(midiNote).toFixed(2);
-        console.log(`MIDI Note: ${midiNote}, Frequency: ${frequency} Hz`);
-        updateNode(id, {
-          midi: parseFloat(frequency),
+    if (midiNote !== null) {
+      const frequency = midiToFrequency(midiNote).toFixed(2);
+      console.log(`MIDI Note: ${midiNote}, Frequency: ${frequency} Hz`);
+      updateNode(id, {
+        midi: parseFloat(frequency),
+      });
+
+      // 按下键盘时点亮灯泡
+      setIsLightOn(true);
+      //updateNode(id, { trigger: "triggerAttack" });
+      console.log("keydown");
+      console.log(triggerSourceNodeData);
+      if (triggerSourceNodeData.length > 0) {
+        triggerSourceNodeData.forEach((component) => {
+          if (
+            "triggerAttack" in component &&
+            typeof component.triggerAttack === "function"
+          ) {
+            component.triggerAttack();
+            console.log("triggerAttack");
+          }
         });
-
-        // 按下键盘时点亮灯泡
-        setIsLightOn(true);
-        updateNode(id, { trigger: "triggerAttack" });
       }
-    },
-    [octaveOffset]
-  );
+    }
+  };
 
   // 处理 keyup 事件，在松开按键时熄灭灯泡
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
@@ -120,7 +132,19 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
     pressedKeys.delete(key); // 从 pressedKeys 集合中移除键
 
     setIsLightOn(false);
-    updateNode(id, { trigger: "triggerRelease" });
+    //updateNode(id, { trigger: "triggerRelease" });
+
+    if (triggerSourceNodeData.length > 0) {
+      triggerSourceNodeData.forEach((component) => {
+        if (
+          "triggerRelease" in component &&
+          typeof component.triggerRelease === "function"
+        ) {
+          component.triggerRelease();
+          console.log("triggerRelease");
+        }
+      });
+    }
   }, []);
 
   const midiToFrequency = (midiNote: number): number =>
@@ -135,6 +159,16 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
       window.removeEventListener("keyup", handleKeyUp, { capture: true });
     };
   }, [handleKeyDown, handleKeyUp]);
+
+  //---------- 处理trigger输出 ----------
+  const triggerConnection = getHandleConnections(id, "source", "trigger");
+  const triggerConnections =
+    triggerConnection.length > 0 ? triggerConnection : [];
+  const triggerSourceNodeData: Tone.ToneAudioNode[] = triggerConnections.map(
+    (connection) => {
+      return getNodeData(connection.target, "component") as Tone.ToneAudioNode;
+    }
+  );
 
   return (
     <div
