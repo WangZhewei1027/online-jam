@@ -14,14 +14,14 @@ import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
 function Multiply({
   id,
-  data: { label, output },
+  data: { label, output, value },
   selected,
   ...props
-}: NodeProps & { data: { label: string; output: number } }) {
+}: NodeProps & { data: { label: string; output: number; value: number } }) {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
-  const [number, setNumber] = useState<number>(output ?? 1);
+  const [number, setNumber] = useState<number>(value ?? 1);
 
   const inputConnections = getHandleConnections(id, "target", "input");
   const inputSourceNodeData: number | null =
@@ -37,12 +37,14 @@ function Multiply({
     setNumber(newValue);
     updateNode(id, {
       output: inputSourceNodeData ? inputSourceNodeData * number : 0,
+      value: newValue,
     });
   };
 
   useEffect(() => {
     updateNode(id, {
       output: inputSourceNodeData ? inputSourceNodeData * number : 0,
+      value: number,
     });
   }, [number]);
 
@@ -50,6 +52,7 @@ function Multiply({
     console.log("inputSourceNodeData", inputSourceNodeData);
     updateNode(id, {
       output: inputSourceNodeData ? inputSourceNodeData * number : 0,
+      value: number,
     });
   }, [inputSourceNodeData]);
 
