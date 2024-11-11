@@ -6,11 +6,11 @@ import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
 function Text({
   id,
-  data: { label },
+  data: { label, value },
   selected,
   ...props
-}: NodeProps & { data: { label: string } }) {
-  const [text, setText] = useState(label);
+}: NodeProps & { data: { label: string; value: string } }) {
+  const [text, setText] = useState(value);
 
   const onChange = useCallback((evt: any) => {
     const newValue = evt.target.value;

@@ -124,12 +124,12 @@ const Envelope = ({
         </div>
       </div>
       <div className="flex items-center">
-        <Handle
+        {/* <Handle
           type="target"
           position={Position.Left}
           style={{ top: "55%", width: "10px", height: "10px" }}
           id="attack"
-        />
+        /> */}
         <div>
           <div className="flex place-content-between">
             <div className="text-sm">Attack</div>
@@ -146,12 +146,12 @@ const Envelope = ({
         </div>
       </div>
       <div className="">
-        <Handle
+        {/* <Handle
           type="target"
           position={Position.Left}
           style={{ top: "68%", width: "10px", height: "10px" }}
           id="decay"
-        />
+        /> */}
         <div>
           <div className="flex place-content-between">
             <div className="text-sm">Decay</div>
@@ -168,12 +168,12 @@ const Envelope = ({
         </div>
       </div>
       <div className="">
-        <Handle
+        {/* <Handle
           type="target"
           position={Position.Left}
           style={{ top: "81%", width: "10px", height: "10px" }}
           id="sustain"
-        />
+        /> */}
         <div>
           <div className="flex place-content-between">
             <div className="text-sm">Sustain</div>
@@ -190,12 +190,12 @@ const Envelope = ({
         </div>
       </div>
       <div className="my-4">
-        <Handle
+        {/* <Handle
           type="target"
           position={Position.Left}
           style={{ top: "93%", width: "10px", height: "10px" }}
           id="release"
-        />
+        /> */}
         <div>
           <div className="flex place-content-between">
             <div className="text-sm">Release</div>
