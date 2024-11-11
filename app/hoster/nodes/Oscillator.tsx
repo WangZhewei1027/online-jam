@@ -27,7 +27,6 @@ function Oscillator({
 }: NodeProps & { data: { label: string; type: string } }) {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
-  console.log(id, " rendered");
 
   //---------- 获取frequency输入端口的连接信息 ----------
   const [frequency, setFrequency] = useState(0);

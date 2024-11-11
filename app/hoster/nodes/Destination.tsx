@@ -35,7 +35,6 @@ interface DestinationProps extends NodeProps {
 const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
-  console.log(id, " rendered");
 
   const [volumn, setVolumn] = useState(0);
 

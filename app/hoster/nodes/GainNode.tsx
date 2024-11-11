@@ -23,7 +23,6 @@ interface GainNodeProps extends NodeProps {
 const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
-  console.log(id, " rendered");
 
   const [gain, setGain] = useState(1);
   const [disabled, setDisabled] = useState(false);
@@ -49,14 +48,14 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
       ? getNodeData(gainConnections[0].source, gainConnections[0].sourceHandle)
       : null;
 
-  if (gainSourceData instanceof Tone.ToneAudioNode) {
-    console.log("Gain value is ToneAudioNode");
-    gainInputRef.current = gainSourceData as Tone.ToneAudioNode;
-  } else if (typeof gainSourceData === "number") {
-    gainInputRef.current = gainSourceData as number;
-  } else {
-    gainInputRef.current = 1;
-  }
+  // if (gainSourceData instanceof Tone.ToneAudioNode) {
+  //   console.log("Gain value is ToneAudioNode");
+  //   gainInputRef.current = gainSourceData as Tone.ToneAudioNode;
+  // } else if (typeof gainSourceData === "number") {
+  //   gainInputRef.current = gainSourceData as number;
+  // } else {
+  //   gainInputRef.current = 1;
+  // }
 
   // ---------- 初始化GainNode ----------
   const gainRef = useRef<Tone.Gain | null>(null); // Tone.Gain 的引用
@@ -78,25 +77,36 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   // 更新 Gain 值，当 gainValue 改变时触发
   useEffect(() => {
     if (gainRef.current) {
-      console.log(gainInputRef.current);
-      if (typeof gainInputRef.current === "number") {
+      if (typeof gainSourceData === "number") {
+        gainInputRef.current = gainSourceData;
         gainRef.current.gain.rampTo(gainInputRef.current, 0.05);
         console.log("gainValueRef is number");
-      } else if (gainInputRef.current instanceof Tone.ToneAudioNode) {
+      } else if (gainSourceData instanceof Tone.ToneAudioNode) {
+        gainInputRef.current = gainSourceData;
         gainInputRef.current.connect(gainRef.current.gain);
         console.log("gainValueRef is ToneAudioNode");
       }
     }
 
+    if (gainInputRef.current instanceof Tone.Envelope) {
+      setDisabled(true);
+    } else {
+      setDisabled(false);
+    }
+
     return () => {
+      console.log(gainInputRef.current);
       if (
         gainInputRef.current instanceof Tone.ToneAudioNode &&
         gainRef.current
       ) {
         gainInputRef.current.disconnect(gainRef.current.gain);
+        gainRef.current.gain.rampTo(gain, 0.05);
+        console.log("disconnect gainValueRef");
       }
+      gainInputRef.current = 1;
     };
-  }, [gainSourceData, gainRef.current, gainInputRef.current]);
+  }, [gainSourceData, gainRef.current]);
 
   useEffect(() => {
     if (gainRef.current) {
@@ -124,14 +134,6 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
 
     return () => {};
   }, [audioSourceNodeData, gainRef.current, audioComponent.current]);
-
-  useEffect(() => {
-    if (gainInputRef.current instanceof Tone.Envelope) {
-      setDisabled(true);
-    } else {
-      setDisabled(false);
-    }
-  }, [gainInputRef.current]);
 
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} `}>

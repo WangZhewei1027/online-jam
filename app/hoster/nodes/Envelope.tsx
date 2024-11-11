@@ -47,37 +47,12 @@ const Envelope = ({
 }: EnvelopeNodeProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
-  console.log(id, " rendered");
 
   // Envelope values (initialize to 50% of max)
   const [attack, setAttack] = useState(attackData ?? 1); // 50% of max (2)
   const [decay, setDecay] = useState(decayData ?? 1); // 50% of max (2)
   const [sustain, setSustain] = useState(sustainData ?? 0.5); // 50% of max (1)
   const [release, setRelease] = useState(releaseData ?? 1); // 50% of max (2)
-
-  //---------- 获取trigger输入端口的连接信息 ----------
-  const triggerConnection = getHandleConnections(id, "target", "trigger");
-  const triggerSourceNodeData: "triggerAttack" | "triggerRelease" | null =
-    triggerConnection.length > 0 && triggerConnection[0].sourceHandle
-      ? getNodeData(
-          triggerConnection[0].source,
-          triggerConnection[0].sourceHandle
-        )
-      : null;
-
-  useEffect(() => {
-    if (triggerSourceNodeData && envelopeRef.current) {
-      if (triggerSourceNodeData === "triggerAttack") {
-        envelopeRef.current.triggerAttack();
-        updateNode(triggerConnection[0].source, { trigger: null });
-        console.log("triggerAttack");
-      } else if (triggerSourceNodeData === "triggerRelease") {
-        envelopeRef.current.triggerRelease();
-        updateNode(triggerConnection[0].source, { trigger: null });
-        console.log("triggerRelease");
-      }
-    }
-  }, [triggerSourceNodeData]);
 
   // Use useRef to store Tone.Envelope instance
   const envelopeRef = useRef<Tone.Envelope | null>(null);

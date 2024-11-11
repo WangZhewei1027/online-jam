@@ -62,7 +62,6 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
   //const store = useStore(selector, shallow);
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
-  console.log(id, " rendered");
 
   // Add state for octave offset and light bulb state
   const [octaveOffset, setOctaveOffset] = useState(0);
