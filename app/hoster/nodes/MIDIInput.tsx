@@ -15,10 +15,7 @@ import {
   getNodeData,
   updateNode,
 } from "../utils/store";
-import { shallow } from "zustand/shallow";
 import { PiPianoKeys } from "react-icons/pi";
-import { BsLightbulbFill } from "react-icons/bs"; // 灯泡图标
-import { get } from "http";
 import * as Tone from "tone";
 
 // Store selector to subscribe to all necessary store properties

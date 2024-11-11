@@ -1,20 +1,30 @@
 "use client";
 import { useState, useCallback } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  NodeProps,
+  useEdges,
+  useNodesData,
+} from "@xyflow/react";
 import "../styles.css";
-import { useStore, StoreState } from "../utils/store";
-import { shallow } from "zustand/shallow";
-
-const selector = (store: StoreState) => ({
-  updateNode: store.updateNode,
-});
+import {
+  useStore,
+  StoreState,
+  getHandleConnections,
+  getNodeData,
+  updateNode,
+} from "../utils/store";
+import * as Tone from "tone";
 
 function XYPad({
   id,
   data: { label },
   selected,
 }: NodeProps & { data: { label: string } }) {
-  const store = useStore(selector, shallow);
+  const edges = useEdges();
+  const nodesData = useNodesData(edges.map((edge) => edge.source));
+
   const [x, setX] = useState(0.5); // 初始化x轴值
   const [y, setY] = useState(0.5); // 初始化y轴值
 
@@ -34,20 +44,64 @@ function XYPad({
       setY(newY);
 
       // 更新全局状态
-      store.updateNode(id, { x: newX * 1000, y: newY * 1000 });
+      updateNode(id, { x: newX, y: newY });
     },
-    [id, store]
+    [id]
   );
 
+  //---------- 处理trigger输出 ----------
+  const triggerConnection = getHandleConnections(id, "source", "trigger");
+  const triggerConnections =
+    triggerConnection.length > 0 ? triggerConnection : [];
+  const triggerSourceNodeData: Tone.ToneAudioNode[] = triggerConnections.map(
+    (connection) => {
+      return getNodeData(connection.target, "component") as Tone.ToneAudioNode;
+    }
+  );
+
+  function handleMouseDown() {
+    if (triggerSourceNodeData.length > 0) {
+      triggerSourceNodeData.forEach((component) => {
+        if (
+          component &&
+          "triggerAttack" in component &&
+          typeof component.triggerAttack === "function"
+        ) {
+          component.triggerAttack();
+          console.log("triggerAttack");
+        }
+      });
+    }
+  }
+
+  function handleMouseUp() {
+    if (triggerSourceNodeData.length > 0) {
+      triggerSourceNodeData.forEach((component) => {
+        if (
+          component &&
+          "triggerRelease" in component &&
+          typeof component.triggerRelease === "function"
+        ) {
+          component.triggerRelease();
+          console.log("triggerRelease");
+        }
+      });
+    }
+  }
+
   return (
-    <div
-      className={`my-node ${selected ? "my-node-selected" : ""}`}
-      style={{ width: 100, height: 100, position: "relative" }}
-    >
+    <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
       {/* 拖动区域 */}
       <div
         onMouseMove={(e) => e.buttons === 1 && handleDrag(e)}
-        className="w-full h-full border rounded bg-gray-200 relative cursor-crosshair nodrag"
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        className="mx-2 w-48 h-48 shadow-2xl bg-transparent border border-gray-800 rounded relative cursor-crosshair nodrag"
+        style={{
+          transform: `rotateX(${(y - 0.5) * 40}deg) rotateY(${(x - 0.5) * 40}deg) scale(1)`, // 旋转和缩放
+          transition: "transform 0.1s ease-out", // 平滑过渡
+          transformOrigin: "50% 50%", // 动态设置pivot
+        }}
       >
         {/* 显示拖动位置 */}
         <div
@@ -57,7 +111,7 @@ function XYPad({
             bottom: `${y * 100}%`,
             transform: "translate(-50%, 50%)",
           }}
-          className="w-4 h-4 bg-blue-500 rounded-full pointer-events-none"
+          className="w-8 h-8 border border-gray-500 rounded-full pointer-events-none"
         ></div>
       </div>
 
@@ -66,9 +120,9 @@ function XYPad({
         type="source"
         position={Position.Right}
         id="x"
-        style={{ top: "30%" }}
+        style={{ top: "20%", width: "10px", height: "10px" }}
       />
-      <div className="absolute text-[6px] font-bold top-[30%] right-1 -translate-y-1/2">
+      <div className="absolute text-sm top-[20%] right-2 -translate-y-1/2">
         X
       </div>
 
@@ -77,10 +131,20 @@ function XYPad({
         type="source"
         position={Position.Right}
         id="y"
-        style={{ top: "70%" }}
+        style={{ top: "50%", width: "10px", height: "10px" }}
       />
-      <div className="absolute text-[6px] font-bold top-[70%] right-1 -translate-y-1/2">
+      <div className="absolute text-sm top-[50%] right-2 -translate-y-1/2">
         Y
+      </div>
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="trigger"
+        style={{ top: "80%", width: "10px", height: "10px" }}
+      />
+      <div className="absolute text-sm top-[80%] right-2 -translate-y-1/2">
+        T
       </div>
 
       {/* 显示标签 */}

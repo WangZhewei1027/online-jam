@@ -28,11 +28,14 @@ function Value({
   const number = typeof sourceNodeData === "number" ? sourceNodeData : 0;
 
   return (
-    <div className={`my-node ${selected ? "my-node-selected" : ""}`}>
-      <Handle id="input" type="target" position={Position.Left} />
-      <div className="text-[10px]">
-        {typeof number === "number" ? number : 0}
-      </div>
+    <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
+      <Handle
+        id="input"
+        type="target"
+        position={Position.Left}
+        style={{ width: "10px", height: "10px" }}
+      />
+      <div className="text-sm">{typeof number === "number" ? number : 0}</div>
       <div className="my-label">{label}</div>
     </div>
   );

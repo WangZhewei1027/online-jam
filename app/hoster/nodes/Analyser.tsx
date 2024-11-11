@@ -143,8 +143,18 @@ const Analyser = ({
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
       {/* 输入与输出句柄 */}
-      <Handle type="target" position={Position.Left} id="input" />
-      <Handle type="source" position={Position.Right} id="value" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        style={{ width: "10px", height: "10px" }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="value"
+        style={{ width: "10px", height: "10px" }}
+      />
       {/* Canvas 显示波形 */}
       <canvas ref={canvasRef} className="oscilloscope w-full h-full" />
       <div className="my-label">{label}</div>

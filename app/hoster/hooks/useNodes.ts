@@ -28,5 +28,6 @@ export function useNodes() {
     addEnvelope: () => addNode("envelope", "Envelope"),
     addText: () => addNode("text", "Text"),
     addXYPad: () => addNode("xypad", "XYPad"),
+    addMultiply: () => addNode("multiply", "Multiply"),
   };
 }

@@ -25,6 +25,7 @@ import GainNode from "../nodes/GainNode";
 import Envelope from "../nodes/Envelope";
 import Text from "../nodes/Text";
 import XYPad from "../nodes/XYPad";
+import Multiply from "../nodes/Multiply";
 
 export interface StoreState {
   nodes: Node[];
@@ -106,6 +107,7 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     envelope: Envelope,
     text: Text,
     xypad: XYPad,
+    multiply: Multiply,
   },
 
   onNodesChange(changes: NodeChange[]) {

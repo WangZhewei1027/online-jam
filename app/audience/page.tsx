@@ -56,9 +56,9 @@ export default function Page() {
               <Button
                 variant={"outline"}
                 onClick={handleQRCodeClick}
-                className="h-10 w-10 ml-4"
+                className="ml-4"
               >
-                <MdQrCode />
+                <MdQrCode className="w-8 h-8" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px]">

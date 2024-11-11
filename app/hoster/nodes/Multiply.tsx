@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { use, useCallback, useState, useEffect } from "react";
 import {
   Handle,
   Position,
@@ -12,7 +12,7 @@ import "../styles.css";
 
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
-function NumberInput({
+function Multiply({
   id,
   data: { label, output },
   selected,
@@ -21,19 +21,41 @@ function NumberInput({
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
-  const [number, setNumber] = useState<number>(output);
+  const [number, setNumber] = useState<number>(0);
 
-  const onChange = useCallback((evt: any) => {
+  const inputConnections = getHandleConnections(id, "target", "input");
+  const inputSourceNodeData: number | null =
+    inputConnections.length > 0 && inputConnections[0].sourceHandle
+      ? getNodeData(
+          inputConnections[0].source,
+          inputConnections[0].sourceHandle
+        )
+      : null;
+
+  const onChange = (evt: any) => {
     const newValue = evt.target.value;
     setNumber(newValue);
     updateNode(id, {
-      output: newValue ? parseFloat(newValue) : 0,
+      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
     });
-    console.log("NumberInput onChange", newValue);
-  }, []);
+  };
+
+  useEffect(() => {
+    updateNode(id, {
+      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
+    });
+  }, [number]);
+
+  useEffect(() => {
+    console.log("inputSourceNodeData", inputSourceNodeData);
+    updateNode(id, {
+      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
+    });
+  }, [inputSourceNodeData]);
 
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} w-32`}>
+      <div className="text-2xl font-bold font-sans text-center mb-2">X</div>
       <input
         id={`number-${id}`}
         name="number"
@@ -41,6 +63,12 @@ function NumberInput({
         onChange={onChange}
         className="nodrag rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         value={number}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ width: "10px", height: "10px" }}
+        id="input"
       />
       <Handle
         type="source"
@@ -53,4 +81,4 @@ function NumberInput({
   );
 }
 
-export default NumberInput;
+export default Multiply;

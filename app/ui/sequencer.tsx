@@ -228,10 +228,14 @@ export default function Sequencer({
               <div>
                 <Button
                   onClick={handleClick}
-                  className="nodrag w-8 h-8 mb-2"
+                  className="nodrag mb-2"
                   variant="outline"
                 >
-                  {playing ? <MdPause /> : <MdPlayArrow />}
+                  {playing ? (
+                    <MdPause className="h-8 w-8" />
+                  ) : (
+                    <MdPlayArrow className="w-8 h-8" />
+                  )}
                 </Button>
               </div>
             </div>

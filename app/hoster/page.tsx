@@ -74,6 +74,7 @@ function Page() {
     addEnvelope,
     addText,
     addXYPad,
+    addMultiply,
   } = useNodes();
 
   async function handleQRCodeClick() {
@@ -145,6 +146,7 @@ function Page() {
         { label: "New MIDI Input", onClick: addMIDIInput },
         { label: "New Value", onClick: addValue },
         { label: "New XYPad", onClick: addXYPad },
+        { label: "New Multiply", onClick: addMultiply },
       ],
     },
     {
@@ -178,9 +180,9 @@ function Page() {
               <Button
                 variant={"outline"}
                 onClick={handleQRCodeClick}
-                className="h-10 w-10 ml-4"
+                className="ml-4 p-1"
               >
-                <MdQrCode />
+                <MdQrCode className="w-8 h-8" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px]">
