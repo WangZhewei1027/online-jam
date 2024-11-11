@@ -94,8 +94,8 @@ function Page() {
       await updateLastTime(roomId);
       const data = await fetchNodesAndEdges(roomId);
 
-      store.setNodes(data[0].nodes ? data[0].nodes : []);
-      store.setEdges(data[0].edges ? data[0].edges : []);
+      store.setNodes(data[0].nodes);
+      store.setEdges(data[0].edges);
 
       setInit(true);
     }
@@ -117,19 +117,19 @@ function Page() {
     update();
   });
 
-  useEffect(() => {
-    if (!roomId) return;
+  // useEffect(() => {
+  //   if (!roomId) return;
 
-    const interval = setInterval(() => {
-      updateNodesAndEdges(roomId, store.nodes, store.edges);
-      setSave(true);
-      setTimeout(() => {
-        setSave(false);
-      }, 3000);
-    }, 30000);
+  //   const interval = setInterval(() => {
+  //     updateNodesAndEdges(roomId, store.nodes, store.edges);
+  //     setSave(true);
+  //     setTimeout(() => {
+  //       setSave(false);
+  //     }, 3000);
+  //   }, 30000);
 
-    return () => clearInterval(interval);
-  }, [roomId]);
+  //   return () => clearInterval(interval);
+  // }, [roomId]);
 
   const menuItems = [
     {
