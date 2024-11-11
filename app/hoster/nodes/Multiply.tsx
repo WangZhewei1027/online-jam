@@ -21,7 +21,7 @@ function Multiply({
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
-  const [number, setNumber] = useState<number>(0);
+  const [number, setNumber] = useState<number>(output ?? 1);
 
   const inputConnections = getHandleConnections(id, "target", "input");
   const inputSourceNodeData: number | null =

@@ -40,7 +40,7 @@ function Oscillator({
         )
       : null;
   const fre: number =
-    typeof frequencySourceNodeData === "number"
+    typeof frequencySourceNodeData === "number" && frequencySourceNodeData >= 0
       ? Number(frequencySourceNodeData.toFixed(2))
       : 0;
 
