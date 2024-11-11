@@ -94,8 +94,8 @@ function Page() {
       await updateLastTime(roomId);
       const data = await fetchNodesAndEdges(roomId);
 
-      store.setNodes(data[0].nodes);
-      store.setEdges(data[0].edges);
+      store.setNodes(data[0].nodes ? data[0].nodes : []);
+      store.setEdges(data[0].edges ? data[0].edges : []);
 
       setInit(true);
     }
