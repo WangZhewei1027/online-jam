@@ -197,3 +197,17 @@ export async function updateNodesAndEdges(
 
   return data; // 返回更新后的数据
 }
+
+export async function getUserProjects(userId: string) {
+  const { data: notes, error } = await supabase
+    .from("notes")
+    .select("name, create_time, last_time, room") // 添加 `room` 列
+    .eq("created_by", userId); // 筛选 `created_by` 等于用户 ID 的行
+
+  if (error) {
+    console.error("Error fetching user projects:", error);
+    return [];
+  }
+
+  return notes;
+}

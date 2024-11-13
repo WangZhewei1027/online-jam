@@ -28,6 +28,8 @@ function XYPad({
   const [x, setX] = useState(0.5); // 初始化x轴值
   const [y, setY] = useState(0.5); // 初始化y轴值
 
+  const [down, setDown] = useState(false);
+
   // 拖动时更新 x 和 y 的值
   const handleDrag = useCallback(
     (event: React.MouseEvent) => {
@@ -69,6 +71,7 @@ function XYPad({
         ) {
           component.triggerAttack();
           console.log("triggerAttack");
+          setDown(true);
         }
       });
     }
@@ -84,6 +87,7 @@ function XYPad({
         ) {
           component.triggerRelease();
           console.log("triggerRelease");
+          setDown(false);
         }
       });
     }
@@ -98,9 +102,9 @@ function XYPad({
         onMouseUp={handleMouseUp}
         className="mx-2 w-48 h-48 shadow-2xl bg-transparent border border-gray-800 rounded relative cursor-crosshair nodrag"
         style={{
-          transform: `rotateX(${(y - 0.5) * 40}deg) rotateY(${(x - 0.5) * 40}deg) scale(1)`, // 旋转和缩放
+          transform: `rotateX(${(y - 0.5) * 20}deg) rotateY(${(x - 0.5) * 20}deg) scale(1)`, // 旋转和缩放
           transition: "transform 0.1s ease-out", // 平滑过渡
-          transformOrigin: "50% 50%", // 动态设置pivot
+          //perspective: "100px", // 透视
         }}
       >
         {/* 显示拖动位置 */}
@@ -111,7 +115,7 @@ function XYPad({
             bottom: `${y * 100}%`,
             transform: "translate(-50%, 50%)",
           }}
-          className="w-8 h-8 border border-gray-500 rounded-full pointer-events-none"
+          className={`w-8 h-8 ${down ? "border-2" : "border"} border-gray-500 rounded-full pointer-events-none`}
         ></div>
       </div>
 
