@@ -32,6 +32,10 @@ export default function DataTable({ username }: { username: string }) {
         create_time: project.create_time.split("T")[0],
         last_time: project.last_time.split("T")[0],
       }));
+      formattedData.sort(
+        (a, b) =>
+          new Date(b.last_time).getTime() - new Date(a.last_time).getTime()
+      );
       setData(formattedData);
     };
 
@@ -39,6 +43,10 @@ export default function DataTable({ username }: { username: string }) {
       console.error("Error fetching user projects:", err)
     );
   }, [username]);
+
+  const handleOpenProject = (projectId: string) => {
+    window.location.href = "/hoster?room=" + projectId;
+  };
 
   return (
     <div className="container mx-auto">
@@ -62,7 +70,7 @@ export default function DataTable({ username }: { username: string }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => alert(`Viewing details of ${project.name}`)}
+                  onClick={() => handleOpenProject(project.id)}
                 >
                   Open
                 </Button>
