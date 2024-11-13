@@ -44,6 +44,7 @@ const Destination = ({ id, data: { label }, selected }: DestinationProps) => {
   useEffect(() => {
     if (!desRef.current) {
       desRef.current = Tone.getDestination();
+      console.log(Tone.getContext().latencyHint);
     }
 
     return () => {

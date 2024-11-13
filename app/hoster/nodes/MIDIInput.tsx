@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, use } from "react";
 import {
   Handle,
   Position,
@@ -8,21 +8,9 @@ import {
   useNodesData,
 } from "@xyflow/react";
 import "../styles.css";
-import {
-  useStore,
-  StoreState,
-  getHandleConnections,
-  getNodeData,
-  updateNode,
-} from "../utils/store";
+import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import { PiPianoKeys } from "react-icons/pi";
 import * as Tone from "tone";
-
-// Store selector to subscribe to all necessary store properties
-const selector = (store: StoreState) => ({
-  nodes: store.nodes,
-  edges: store.edges,
-});
 
 // Map of keyboard keys to MIDI notes for white and black keys
 const whiteKeys: Record<string, number> = {
@@ -47,7 +35,7 @@ const blackKeys: Record<string, number> = {
 // 定义 data 的类型，要求 label 是 string，midi 是 number
 interface MIDIInputData extends Record<string, unknown> {
   label: string;
-  midi: number;
+  value: number;
 }
 
 // 扩展 NodeProps 以包含我们定义的 MIDIInputData 类型
@@ -99,9 +87,11 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
     if (midiNote !== null) {
       const frequency = midiToFrequency(midiNote).toFixed(2);
       console.log(`MIDI Note: ${midiNote}, Frequency: ${frequency} Hz`);
+
       updateNode(id, {
-        midi: parseFloat(frequency),
+        value: parseFloat(frequency),
       });
+      frequencyComponent.current.value = parseFloat(frequency);
 
       // 按下键盘时点亮灯泡
       setIsLightOn(true);
@@ -168,6 +158,16 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
     }
   );
 
+  //---------- 处理frequency输出 ----------
+  const frequencyComponent = useRef<Tone.Signal>(new Tone.Signal(0));
+  useEffect(() => {
+    updateNode(id, { component: frequencyComponent.current });
+
+    return () => {
+      frequencyComponent.current.dispose();
+    };
+  }, [frequencyComponent.current]);
+
   return (
     <div
       className={`style-node ${selected ? "style-node-selected" : ""} w-24 items-center`}
@@ -183,7 +183,7 @@ function MIDIInput({ id, data, selected, ...props }: MIDIInputProps) {
         type="source"
         position={Position.Right}
         style={{ top: "30%", width: "10px", height: "10px" }}
-        id="midi"
+        id="component"
       />
       <Handle
         type="source"

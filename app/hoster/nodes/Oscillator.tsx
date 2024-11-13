@@ -33,24 +33,33 @@ function Oscillator({
   const frequency = useRef<number>(0);
 
   const frequencyConnection = getHandleConnections(id, "target", "frequency");
-  const frequencySourceNodeData: number | null =
+  const frequencySourceNodeData =
     frequencyConnection.length > 0 && frequencyConnection[0].sourceHandle
       ? getNodeData(
           frequencyConnection[0].source,
           frequencyConnection[0].sourceHandle
         )
       : null;
-  const fre: number =
-    typeof frequencySourceNodeData === "number" && frequencySourceNodeData >= 0
-      ? Number(frequencySourceNodeData.toFixed(2))
-      : 0;
 
   useEffect(() => {
-    frequency.current = fre;
-    if (oscRef.current) {
-      oscRef.current.frequency.value = fre;
+    if (frequencySourceNodeData && oscRef.current) {
+      if (typeof frequencySourceNodeData === "number") {
+        frequency.current = frequencySourceNodeData;
+      } else if (frequencySourceNodeData instanceof Tone.Signal) {
+        frequencySourceNodeData.connect(oscRef.current.frequency);
+      }
     }
-  }, [fre]);
+
+    return () => {
+      if (frequencySourceNodeData instanceof Tone.Signal && oscRef.current) {
+        try {
+          frequencySourceNodeData.disconnect(oscRef.current.frequency);
+        } catch (e) {
+          console.error("Error during cleanup disconnection:", e);
+        }
+      }
+    };
+  }, [frequencySourceNodeData]);
 
   //---------- 初始化Tone.Oscillator实例 ----------
   const oscRef = useRef<Tone.Oscillator | null>(null);
