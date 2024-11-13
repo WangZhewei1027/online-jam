@@ -25,7 +25,16 @@ function Value({
     connections.length > 0 && connections[0].sourceHandle
       ? getNodeData(connections[0].source, connections[0].sourceHandle)
       : null;
-  const number = typeof sourceNodeData === "number" ? sourceNodeData : 0;
+  const sourceNodeValue =
+    connections.length > 0 && connections[0].sourceHandle
+      ? getNodeData(connections[0].source, "value")
+      : null;
+  const info =
+    typeof sourceNodeData === "number" || typeof sourceNodeData === "string"
+      ? sourceNodeData
+      : sourceNodeValue
+        ? sourceNodeValue
+        : 0;
 
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} `}>
@@ -35,7 +44,7 @@ function Value({
         position={Position.Left}
         style={{ width: "10px", height: "10px" }}
       />
-      <div className="text-sm">{typeof number === "number" ? number : 0}</div>
+      <div className="text-sm">{info}</div>
       <div className="my-label">{label}</div>
     </div>
   );
