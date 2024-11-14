@@ -100,9 +100,16 @@ const Analyser = ({
     if (!ctx) return;
 
     let animationId: number;
+    let lastDrawTime = 0; // 上次绘制时间
 
-    const drawWaveform = () => {
+    const drawWaveform = (timestamp: number) => {
       animationId = requestAnimationFrame(drawWaveform);
+
+      // 控制帧率为 30FPS
+      if (timestamp - lastDrawTime < 1000 / 60) {
+        return;
+      }
+      lastDrawTime = timestamp;
 
       if (!analyserRef.current) return;
       const waveform = analyserRef.current.getValue();
@@ -133,7 +140,7 @@ const Analyser = ({
       updateNode(id, { value: waveform[0] });
     };
 
-    drawWaveform();
+    animationId = requestAnimationFrame(drawWaveform);
 
     return () => {
       cancelAnimationFrame(animationId);
