@@ -176,18 +176,18 @@ export async function updateNodesAndEdges(
     throw new Error("roomId is required");
   }
 
-  // 移除 nodes 中的 component 字段
-  newNodes.map((node) => {
-    const { component, ...rest } = node.data;
-    node.data = rest; // 更新 node.data 字段
+  // 创建新的数组，不直接修改 newNodes
+  const sanitizedNodes = newNodes.map((node) => {
+    const { component, ...rest } = node.data; // 去掉 component 字段
+    return { ...node, data: rest }; // 返回一个新的 node 对象
   });
 
   // 更新数据库
   const { data, error } = await supabase
     .from("notes")
     .update({
-      nodes: newNodes, // 更新去除 component 字段后的 nodes 列
-      edges: newEdges, // 更新去除 component 字段后的 edges 列
+      nodes: sanitizedNodes, // 使用去掉 component 的新节点数据
+      edges: newEdges,
     })
     .eq("room", roomId); // 确保更新的是指定 roomId 的记录
 

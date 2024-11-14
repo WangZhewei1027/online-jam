@@ -31,6 +31,7 @@ import { shallow } from "zustand/shallow";
 import { useStore, StoreState } from "./utils/store";
 import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
+import { time } from "console";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -101,14 +102,22 @@ function Page() {
     }
 
     init();
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   async function update() {
     await updateNodesAndEdges(roomId, store.nodes, store.edges);
 
     setSave(true);
 
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setSave(false);
     }, 2000);
   }

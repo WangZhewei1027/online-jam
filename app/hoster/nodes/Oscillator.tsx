@@ -45,6 +45,7 @@ function Oscillator({
     if (frequencySourceNodeData && oscRef.current) {
       if (typeof frequencySourceNodeData === "number") {
         frequency.current = frequencySourceNodeData;
+        oscRef.current.frequency.value = frequencySourceNodeData;
       } else if (frequencySourceNodeData instanceof Tone.Signal) {
         frequencySourceNodeData.connect(oscRef.current.frequency);
       }
