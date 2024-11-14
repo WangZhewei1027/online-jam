@@ -27,8 +27,16 @@ import Text from "../nodes/Text";
 import XYPad from "../nodes/XYPad";
 import Multiply from "../nodes/Multiply";
 
+interface MyNode extends Node {
+  data: {
+    handleKeyDownFunction?: (frequency: number) => void;
+    handleKeyUpFunction?: () => void;
+    [key: string]: any;
+  };
+}
+
 export interface StoreState {
-  nodes: Node[];
+  nodes: MyNode[];
   nodes_selectedValue: Omit<Node, "position">[];
   edges: Edge[];
   undoStack: { nodes: Node[]; edges: Edge[] }[];
