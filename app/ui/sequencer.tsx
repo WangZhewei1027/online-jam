@@ -13,6 +13,7 @@ import {
   updataSequencerData,
   updateLastTime,
 } from "../utils";
+import { Slider } from "@/components/ui/slider";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -26,6 +27,7 @@ interface SwitchProps {
   player: Tone.Player;
   change: boolean;
   onToggle: (instrument: string, index: number, change: boolean) => void;
+  volumn: number;
 }
 
 const Switch: React.FC<SwitchProps> = ({
@@ -35,6 +37,7 @@ const Switch: React.FC<SwitchProps> = ({
   player,
   change,
   onToggle,
+  volumn,
 }) => {
   const [enabled, setEnabled] = useState(false);
 
@@ -50,6 +53,7 @@ const Switch: React.FC<SwitchProps> = ({
         if (player.state === "started") {
           player.stop();
         }
+        player.volume.value = volumn;
         player.start();
       }
     }
@@ -85,6 +89,7 @@ export default function Sequencer({
   const [dataLoaded, setDataLoaded] = useState(false);
   const [roomId, setRoomId] = useState("");
   const [clockInterval, setClockInterval] = useState(200);
+  const [volumn, setVolumn] = useState(-2);
 
   // Clock signal
   useEffect(() => {
@@ -146,7 +151,7 @@ export default function Sequencer({
           players[sound] = new Tone.Player(
             `/drum212/${sound}.mp3`
           ).toDestination();
-          players[sound].volume.value = -2;
+          players[sound].volume.value = volumn;
         });
 
         setPlayers(players);
@@ -215,6 +220,7 @@ export default function Sequencer({
                             : false
                         }
                         onToggle={handleToggle}
+                        volumn={volumn}
                       />
                     </div>
                   ))}
@@ -237,6 +243,18 @@ export default function Sequencer({
                     <MdPlayArrow className="w-8 h-8" />
                   )}
                 </Button>
+              </div>
+              <div className="w-full max-w-64 h-4">
+                <Slider
+                  min={-32}
+                  max={0}
+                  step={0.1}
+                  defaultValue={[0]}
+                  onValueChange={(num) => {
+                    num[0] === -32 ? setVolumn(-Infinity) : setVolumn(num[0]);
+                  }}
+                  className="nodrag"
+                ></Slider>
               </div>
             </div>
           )}
