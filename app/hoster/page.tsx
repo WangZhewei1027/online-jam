@@ -50,6 +50,7 @@ const selector = (store: StoreState) => ({
   onReconnectStart: store.onReconnectStart,
   onReconnectEnd: store.onReconnectEnd,
 });
+import TransportControl from "./components/TransportControl";
 
 function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
@@ -76,6 +77,7 @@ function Page() {
     addText,
     addXYPad,
     addMultiply,
+    addMidiGrid,
   } = useNodes();
 
   async function handleQRCodeClick() {
@@ -146,6 +148,7 @@ function Page() {
       actions: [
         { label: "New Oscillator", onClick: addOscillator },
         { label: "New Sequencer", onClick: addSequencer },
+        { label: "New MIDI Grid", onClick: addMidiGrid },
       ],
     },
     {
@@ -260,6 +263,11 @@ function Page() {
             >
               <MdOutlineRedo className="w-full h-full" />
             </Button>
+          </div>
+
+          {/* Transport Control */}
+          <div className="absolute bottom-4 right-4 z-50">
+            <TransportControl />
           </div>
 
           {/* Canvas */}

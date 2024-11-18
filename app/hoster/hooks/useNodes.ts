@@ -29,5 +29,6 @@ export function useNodes() {
     addText: () => addNode("text", "Text"),
     addXYPad: () => addNode("xypad", "XYPad"),
     addMultiply: () => addNode("multiply", "Multiply"),
+    addMidiGrid: () => addNode("midigrid", "Midi Grid"),
   };
 }

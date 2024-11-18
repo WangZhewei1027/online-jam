@@ -26,6 +26,7 @@ import Envelope from "../nodes/Envelope";
 import Text from "../nodes/Text";
 import XYPad from "../nodes/XYPad";
 import Multiply from "../nodes/Multiply";
+import MidiGrid from "../nodes/MidiGrid";
 
 interface MyNode extends Node {
   data: {
@@ -116,6 +117,7 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     text: Text,
     xypad: XYPad,
     multiply: Multiply,
+    midigrid: MidiGrid,
   },
 
   onNodesChange(changes: NodeChange[]) {
