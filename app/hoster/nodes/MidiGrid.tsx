@@ -45,18 +45,6 @@ const MidiGrid = ({ id, data, selected }: NodeProps) => {
     });
   };
 
-  // Initialize Tone.js Transport and Part
-  useEffect(() => {
-    console.log("Tone.getTransport().bpm", Tone.getTransport().bpm);
-    const initializeTone = async () => {
-      await Tone.start();
-      Tone.Transport.loop = true;
-      Tone.Transport.loopEnd = `${numCols * 0.125}m`; // Loop length based on columns
-    };
-
-    initializeTone();
-  }, []); // Only run on mount
-
   const triggerConnection = getHandleConnections(id, "source", "trigger");
   const triggerConnections =
     triggerConnection.length > 0 ? triggerConnection : [];
@@ -120,22 +108,14 @@ const MidiGrid = ({ id, data, selected }: NodeProps) => {
       },
       Array.from({ length: numCols }, (_, i) => [i * 0.25, i])
     );
+    tonePartRef.current.loop = true;
+    tonePartRef.current.loopEnd = "1m";
     tonePartRef.current.start(0);
 
     return () => {
       if (tonePartRef.current) tonePartRef.current.dispose();
     };
   }, [gridData]);
-
-  // Start/Stop Transport
-  const togglePlay = () => {
-    if (Tone.Transport.state === "started") {
-      Tone.Transport.stop();
-      setActiveColumn(-1); // Reset active column
-    } else {
-      Tone.Transport.start();
-    }
-  };
 
   return (
     <div
@@ -160,14 +140,6 @@ const MidiGrid = ({ id, data, selected }: NodeProps) => {
           );
         })}
       </div>
-
-      {/* Play/Stop Button */}
-      {/* <button
-        className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
-        onClick={togglePlay}
-      >
-        {Tone.Transport.state === "started" ? "Stop" : "Play"}
-      </button> */}
 
       <Handle
         type="source"
