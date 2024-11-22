@@ -9,9 +9,13 @@ export function useNodes() {
     const newNode = {
       id: nanoid(6),
       type,
-      position: { x: Math.random() * 200, y: Math.random() * 200 },
+      position: {
+        x: store.last_selected_node_position.x + Math.random() * 100,
+        y: store.last_selected_node_position.y + Math.random() * 100,
+      },
       data: { label },
     };
+    console.log("Adding node", newNode);
     store.addNode(newNode);
   };
 

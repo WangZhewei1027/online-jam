@@ -39,6 +39,7 @@ interface MyNode extends Node {
 export interface StoreState {
   nodes: MyNode[];
   nodes_selectedValue: Omit<Node, "position">[];
+  last_selected_node_position: { x: number; y: number };
   edges: Edge[];
   undoStack: { nodes: Node[]; edges: Edge[] }[];
   redoStack: { nodes: Node[]; edges: Edge[] }[];
@@ -93,11 +94,13 @@ export interface StoreState {
     edge: Edge,
     handleType: HandleType
   ) => void;
+  handleNodeSelection: (node: Node) => void;
 }
 
 export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
   nodes: [],
   nodes_selectedValue: [],
+  last_selected_node_position: { x: 0, y: 0 },
   edges: [],
   undoStack: [],
   redoStack: [],
@@ -307,6 +310,10 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     }
     set(() => ({ edgeReconnectSuccessful: { current: false } }));
   },
+  handleNodeSelection: (node: Node) => {
+    set({ last_selected_node_position: node.position });
+    console.log("node selected", node);
+  },
 }));
 
 /**
@@ -331,6 +338,8 @@ export const getHandleConnections = useStore.getState().getHandleConnections;
 export const getNodeData = useStore.getState().getNodeData;
 
 export const updateNode = useStore.getState().updateNode;
+
+export const handleNodeSelection = useStore.getState().handleNodeSelection;
 
 // HMR 配置
 declare const module: any;

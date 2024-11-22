@@ -114,7 +114,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             updateNode(id, {
               midi: 220 * Math.pow(2, row / 12),
             });
-            console.log(triggerSourceNodeData);
+            //console.log(triggerSourceNodeData);
             if (triggerSourceNodeData.length > 0) {
               triggerSourceNodeData.forEach((component) => {
                 if (

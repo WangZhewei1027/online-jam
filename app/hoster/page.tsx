@@ -18,7 +18,7 @@ import {
   fetchNodesAndEdges,
   updateNodesAndEdges,
 } from "../utils";
-import { ReactFlow, Controls, Background } from "@xyflow/react";
+import { ReactFlow, Controls, Background, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import { MdOutlineCloudDone } from "react-icons/md";
@@ -31,7 +31,7 @@ import { shallow } from "zustand/shallow";
 import { useStore, StoreState } from "./utils/store";
 import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
-import { time } from "console";
+import { handleNodeSelection } from "./utils/store";
 
 const selector = (store: StoreState) => ({
   nodes: store.nodes,
@@ -295,6 +295,15 @@ function Page() {
               onReconnect={store.onReconnect}
               onReconnectEnd={store.onReconnectEnd}
               disableKeyboardA11y={true}
+              // onSelectionChange={(params) => {
+              //   if (params.nodes.length > 0) {
+              //     // handleNodeSelection(params.nodes[0]);
+              //     console.log(params.nodes[0]);
+              //   }
+              // }}
+              onNodeClick={(event, node) => {
+                handleNodeSelection(node);
+              }}
               fitView
             >
               <Background />
