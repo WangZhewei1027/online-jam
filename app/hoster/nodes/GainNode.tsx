@@ -12,15 +12,17 @@ import * as Tone from "tone";
 import TargetHandle from "./TargetHandle";
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import { Slider } from "@/components/ui/slider";
+import { data } from "autoprefixer";
 
 interface GainNodeProps extends NodeProps {
   data: {
     component?: Tone.ToneAudioNode;
     label: string;
+    value?: number;
   };
 }
 
-const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
+const GainNode = ({ id, data: { label, value }, selected }: GainNodeProps) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
@@ -67,6 +69,10 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
       updateNode(id, { component: gainRef.current });
     }
 
+    if (value) {
+      setGain(value);
+    }
+
     return () => {
       // 清理 Gain 实例，防止内存泄漏
       gainRef.current?.dispose();
@@ -111,6 +117,7 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
   useEffect(() => {
     if (gainRef.current) {
       gainRef.current.gain.rampTo(gain, 0.01);
+      updateNode(id, { value: gain });
     }
   }, [gain]);
 
@@ -148,7 +155,7 @@ const GainNode = ({ id, data: { label }, selected }: GainNodeProps) => {
           min={0}
           max={3}
           step={0.01}
-          defaultValue={[1]}
+          defaultValue={[value ? value : 1]}
           onValueChange={(num) => setGain(num[0])}
           className="nodrag w-32 mt-2 data-[disabled]:opacity-50"
           disabled={disabled}

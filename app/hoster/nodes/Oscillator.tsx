@@ -118,7 +118,7 @@ function Oscillator({
       {/* WaveType Selection */}
       <div className="flex place-content-between mt-4">
         <div className="text-sm">Wave Type</div>
-        <div>
+        <div className="relative">
           <DropdownMenu>
             <DropdownMenuTrigger className="text-sm underline italic">
               {waveType.charAt(0).toUpperCase() + waveType.slice(1)}
