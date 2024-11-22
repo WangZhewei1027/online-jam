@@ -211,3 +211,40 @@ export async function getUserProjects(userId: string) {
 
   return notes;
 }
+
+export async function createInterative(roomId: string, component_data: any) {
+  const { data, error } = await supabase
+    .from("interactive")
+    .insert([
+      {
+        from_room: roomId,
+        data: component_data,
+      },
+    ])
+    .select();
+  if (data) {
+    console.log(data);
+    return data[0].id;
+  }
+}
+
+export async function fetchInteractive(componentId: string) {
+  const { data, error } = await supabase
+    .from("interactive")
+    .select("data")
+    .eq("id", componentId);
+  if (data) {
+    return data[0];
+  }
+}
+
+export async function updateInteractive(componentId: string, newData: any) {
+  const { data, error } = await supabase
+    .from("interactive")
+    .update({ data: newData })
+    .eq("id", componentId)
+    .select();
+  if (data) {
+    console.log(data);
+  }
+}

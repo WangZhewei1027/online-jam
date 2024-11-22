@@ -10,22 +10,63 @@ import {
 } from "@xyflow/react";
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import * as Tone from "tone";
+import {
+  createInterative,
+  getRoomId,
+  fetchInteractive,
+  updateInteractive,
+} from "@/app/utils";
+import Spinner from "@/components/ui/spinner";
 
-const MidiGrid = ({ id, data, selected }: NodeProps) => {
+interface MidiGridData extends NodeProps {
+  data: {
+    id?: string;
+    label: string;
+    grid?: Array<boolean>;
+  };
+}
+
+const MidiGrid = ({ id, data, selected }: MidiGridData) => {
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
   const numCols = 8; // Number of columns (beats per bar)
   const numRows = 7; // Number of rows (MIDI notes)
   const [gridData, setGridData] = useState<boolean[]>(
-    Array.isArray(data.grid) ? data.grid : Array(numCols * numRows).fill(false)
+    Array(numCols * numRows).fill(false)
   );
   const [activeColumn, setActiveColumn] = useState<number>(-1); // Active column
   const tonePartRef = useRef<Tone.Part | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    async function init() {
+      if (!data.id) {
+        const roomId = await getRoomId();
+        const componentId = await createInterative(roomId, {
+          data: Array(numCols * numRows).fill(false),
+        });
+        updateNode(id, { id: componentId });
+      }
+      if (data.id) {
+        const interactiveData = await fetchInteractive(data.id);
+        if (interactiveData) {
+          console.log("init data", interactiveData.data.data);
+          setGridData(interactiveData.data.data);
+        }
+      }
+      console.log("init");
+      console.log(gridData);
+      setLoaded(true);
+    }
+
+    init();
+  }, []);
 
   // Handle grid click logic
   const handleGridClick = (index: number) => {
     setGridData((prevGridData) => {
+      console.log(prevGridData);
       const newGridData = [...prevGridData];
       const col = index % numCols;
 
@@ -41,6 +82,7 @@ const MidiGrid = ({ id, data, selected }: NodeProps) => {
         newGridData[index] = true;
       }
 
+      updateInteractive(data.id as string, { data: newGridData });
       return newGridData;
     });
   };
@@ -118,42 +160,52 @@ const MidiGrid = ({ id, data, selected }: NodeProps) => {
   }, [gridData]);
 
   return (
-    <div
-      className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
-    >
-      {/* Grid */}
-      <div className="nodrag grid grid-cols-8 gap-1">
-        {Array.from({ length: numRows * numCols }).map((_, index) => {
-          const col = index % numCols;
-          return (
-            <div
-              key={index}
-              className={`border w-16 h-8 cursor-pointer ${
-                gridData[index]
-                  ? "bg-blue-500"
-                  : activeColumn === col
-                    ? "bg-gray-300"
-                    : "bg-white"
-              }`}
-              onClick={() => handleGridClick(index)}
-            ></div>
-          );
-        })}
-      </div>
+    <>
+      <div
+        className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
+      >
+        {loaded ? (
+          <>
+            {/* Grid */}
+            <div className="nodrag grid grid-cols-8 gap-1">
+              {Array.from({ length: numRows * numCols }).map((_, index) => {
+                const col = index % numCols;
+                return (
+                  <div
+                    key={index}
+                    className={`border w-16 h-8 cursor-pointer ${
+                      gridData[index]
+                        ? "bg-blue-500"
+                        : activeColumn === col
+                          ? "bg-gray-300"
+                          : "bg-white"
+                    }`}
+                    onClick={() => handleGridClick(index)}
+                  ></div>
+                );
+              })}
+            </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ top: "30%" }}
-        id="midi"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ top: "70%" }}
-        id="trigger"
-      />
-    </div>
+            <Handle
+              type="source"
+              position={Position.Right}
+              style={{ top: "30%" }}
+              id="midi"
+            />
+            <Handle
+              type="source"
+              position={Position.Right}
+              style={{ top: "70%" }}
+              id="trigger"
+            />
+
+            <div className="my-label">{data.label as string}</div>
+          </>
+        ) : (
+          <Spinner width={6} height={6} />
+        )}
+      </div>
+    </>
   );
 };
 
