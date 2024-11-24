@@ -14,9 +14,9 @@ const TransportControl = () => {
   useEffect(() => {
     Tone.getTransport().bpm.value = bpm; // 设置 BPM
 
-    return () => {
-      Tone.getTransport().stop(); // 清理，防止组件卸载后仍然运行
-    };
+    // return () => {
+    //   Tone.getTransport().stop(); // 清理，防止组件卸载后仍然运行
+    // };
   }, [bpm]);
 
   // 实时更新 Transport 位置
