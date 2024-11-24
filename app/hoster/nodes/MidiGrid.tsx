@@ -47,7 +47,6 @@ const midiToFrequency = (midiNote: number): number =>
   440 * Math.pow(2, (midiNote - 69) / 12);
 
 const MidiGrid = ({ id, data, selected }: MidiGridData) => {
-  console.log("MidiGrid 渲染");
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
@@ -131,20 +130,32 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     });
   };
 
-  const triggerSourceNodeData: Tone.ToneAudioNode[] = useMemo(() => {
-    console.log(edges);
-    const triggerConnection = getHandleConnections(id, "source", "trigger");
-    const triggerConnections =
-      triggerConnection.length > 0 ? triggerConnection : [];
-    console.log(triggerConnections);
-    return triggerConnections.map(
-      (connection) =>
-        getNodeData(connection.target, "component") as Tone.ToneAudioNode
-    );
-  }, [id, edges]);
+  // const triggerSourceNodeData: Tone.ToneAudioNode[] = useMemo(() => {
+  //   console.log(edges);
+  //   const triggerConnection = getHandleConnections(id, "source", "trigger");
+  //   const triggerConnections =
+  //     triggerConnection.length > 0 ? triggerConnection : [];
+  //   console.log(triggerConnections);
+  //   return triggerConnections.map(
+  //     (connection) =>
+  //       getNodeData(connection.target, "component") as Tone.ToneAudioNode
+  //   );
+  // }, [id, edges]);
 
   useEffect(() => {
     updateNode(id, { grid: gridData });
+
+    const triggerConnection = getHandleConnections(id, "source", "trigger");
+    const triggerConnections =
+      triggerConnection.length > 0 ? triggerConnection : [];
+    const triggerSourceNodeData: Tone.ToneAudioNode[] = triggerConnections.map(
+      (connection) => {
+        return getNodeData(
+          connection.target,
+          "component"
+        ) as Tone.ToneAudioNode;
+      }
+    );
 
     // Create a Tone.Part
     tonePartRef.current = new Tone.Part(
@@ -203,7 +214,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     return () => {
       if (tonePartRef.current) tonePartRef.current.dispose();
     };
-  }, [gridData, triggerSourceNodeData]);
+  }, [gridData]);
 
   return (
     <>
