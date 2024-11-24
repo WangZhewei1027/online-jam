@@ -1,26 +1,27 @@
 "use client";
-import React, { useEffect, useRef } from "react";
-import * as Tone from "tone";
+import React, { useState } from "react";
 
-const Oscilloscope = () => {
-  useEffect(() => {
-    // 创建一个振荡器
-    const osc = new Tone.Oscillator("C4", "sine").start();
+interface ChildProps {
+  onClick: () => void;
+}
 
-    // 创建一个包络
-    const envelope = new Tone.AmplitudeEnvelope({
-      attack: 0.1, // 攻击时间
-      decay: 0.2, // 衰减时间
-      sustain: 0.9, // 持续时间
-      release: 1.5, // 释放时间
-    }).toDestination();
+const Child = React.memo(({ onClick }: ChildProps) => {
+  console.log("Child rendered");
+  return <button onClick={onClick}>Click me</button>;
+});
 
-    // 将振荡器连接到包络
-    osc.connect(envelope);
+export default function Parent() {
+  const [count, setCount] = useState(0);
 
-    // 触发包络的开始和结束
-    envelope.triggerAttackRelease("4n");
-  }, []);
-};
+  const handleClick = () => {
+    console.log("Button clicked");
+  };
 
-export default Oscilloscope;
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <Child onClick={handleClick} />
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState, useMemo } from "react";
 import {
   Handle,
   Position,
@@ -68,16 +68,20 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
           data: Array(numCols * numRows).fill(false),
         });
         updateNode(id, { id: componentId });
+        //console.log("componentId", componentId);
       }
       if (data.id) {
-        const interactiveData = await fetchInteractive(data.id);
+        componentId = data.id;
+      }
+      if (componentId) {
+        const interactiveData = await fetchInteractive(componentId);
+        //console.log("init data", interactiveData);
+
         if (interactiveData) {
           //console.log("init data", interactiveData.data.data);
           setGridData(interactiveData.data.data);
         }
       }
-      console.log("init");
-      console.log(gridData);
 
       const channel = supabase
         .channel(id)
@@ -105,7 +109,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
   // Handle grid click logic
   const handleGridClick = (index: number) => {
     setGridData((prevGridData) => {
-      console.log(prevGridData);
+      //console.log(prevGridData);
       const newGridData = [...prevGridData];
       const col = index % numCols;
 
@@ -126,19 +130,20 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     });
   };
 
-  const triggerConnection = getHandleConnections(id, "source", "trigger");
-  const triggerConnections =
-    triggerConnection.length > 0 ? triggerConnection : [];
-  const triggerSourceNodeData: Tone.ToneAudioNode[] = triggerConnections.map(
-    (connection) => {
-      return getNodeData(connection.target, "component") as Tone.ToneAudioNode;
-    }
-  );
+  const triggerSourceNodeData: Tone.ToneAudioNode[] = useMemo(() => {
+    console.log(edges);
+    const triggerConnection = getHandleConnections(id, "source", "trigger");
+    const triggerConnections =
+      triggerConnection.length > 0 ? triggerConnection : [];
+    return triggerConnections.map(
+      (connection) =>
+        getNodeData(connection.target, "component") as Tone.ToneAudioNode
+    );
+  }, [id, edges]);
 
   useEffect(() => {
     updateNode(id, { grid: gridData });
 
-    console.log(Tone.getTransport().bpm.value);
     // Create a Tone.Part
     tonePartRef.current = new Tone.Part(
       (time, col) => {
@@ -197,55 +202,51 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     return () => {
       if (tonePartRef.current) tonePartRef.current.dispose();
     };
-  }, [gridData]);
+  }, [gridData, triggerSourceNodeData]);
 
   return (
     <>
       <div
         className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
       >
-        {loaded ? (
-          <>
-            {/* Grid */}
-            <div className="nodrag grid grid-cols-8 gap-1">
-              {Array.from({ length: numRows * numCols }).map((_, index) => {
-                const col = index % numCols;
-                return (
-                  <div
-                    key={index}
-                    className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
-                      gridData[index]
-                        ? activeColumn === col
-                          ? "bg-blue-400 opacity-95"
-                          : "bg-blue-500 opacity-95"
-                        : activeColumn === col
-                          ? "bg-blue-500 opacity-25"
-                          : "bg-blue-300 opacity-10"
-                    }`}
-                    onClick={() => handleGridClick(index)}
-                  ></div>
-                );
-              })}
-            </div>
+        <>
+          {/* Grid */}
+          <div className="nodrag grid grid-cols-8 gap-1">
+            {Array.from({ length: numRows * numCols }).map((_, index) => {
+              const col = index % numCols;
+              return (
+                <div
+                  key={index}
+                  className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
+                    gridData[index]
+                      ? activeColumn === col
+                        ? "bg-blue-400 opacity-95"
+                        : "bg-blue-500 opacity-95"
+                      : activeColumn === col
+                        ? "bg-blue-500 opacity-25"
+                        : "bg-blue-300 opacity-10"
+                  }`}
+                  onClick={() => handleGridClick(index)}
+                ></div>
+              );
+            })}
+          </div>
 
-            <Handle
-              type="source"
-              position={Position.Right}
-              style={{ top: "30%" }}
-              id="midi"
-            />
-            <Handle
-              type="source"
-              position={Position.Right}
-              style={{ top: "70%" }}
-              id="trigger"
-            />
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ top: "30%" }}
+            id="midi"
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ top: "70%" }}
+            id="trigger"
+          />
 
-            <div className="my-label">{data.label as string}</div>
-          </>
-        ) : (
-          <Spinner width={6} height={6} />
-        )}
+          <div className="my-label">{data.label as string}</div>
+        </>
       </div>
     </>
   );

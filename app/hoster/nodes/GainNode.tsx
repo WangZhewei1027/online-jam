@@ -115,31 +115,32 @@ const GainNode = ({ id, data: { label, value }, selected }: GainNodeProps) => {
   }, [gainSourceData, gainRef.current]);
 
   useEffect(() => {
-    if (gainRef.current) {
+    if (gainRef.current && !(gainSourceData instanceof Tone.ToneAudioNode)) {
+      console.log("Gain value changed to", gain);
       gainRef.current.gain.rampTo(gain, 0.01);
       updateNode(id, { value: gain });
     }
   }, [gain]);
 
-  // 处理音频组件的连接
   useEffect(() => {
     if (gainRef.current) {
       if (audioSourceNodeData instanceof Tone.ToneAudioNode) {
-        // 如果音频源是 ToneAudioNode，则连接
-        if (audioComponent.current !== audioSourceNodeData) {
-          // 防止重复连接相同的节点
-          audioComponent.current?.disconnect(gainRef.current);
-          audioComponent.current = audioSourceNodeData;
-          audioComponent.current.connect(gainRef.current);
-        }
+        console.log(
+          "Connecting Audio Source to GainNode:",
+          audioSourceNodeData
+        );
+        audioComponent.current?.disconnect(gainRef.current);
+        audioComponent.current = audioSourceNodeData;
+        audioComponent.current.connect(gainRef.current);
       } else if (audioComponent.current) {
-        // 如果音频源不是 ToneAudioNode，则断开连接
+        console.log(
+          "Disconnecting Audio Source from GainNode:",
+          audioComponent.current
+        );
         audioComponent.current.disconnect(gainRef.current);
         audioComponent.current = null;
       }
     }
-
-    return () => {};
   }, [audioSourceNodeData, gainRef.current, audioComponent.current]);
 
   return (
