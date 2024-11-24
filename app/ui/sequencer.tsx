@@ -261,9 +261,7 @@ export default function Sequencer({
         </>
       ) : (
         <div className="p-2 md:p-4 flex justify-center">
-          <div className="p-2 border rounded-sm flex w-[963px] h-[274px] justify-center items-center">
-            <Spinner width={6} height={6} />
-          </div>
+          <div className="p-2 border rounded-sm flex w-[963px] h-[274px] justify-center items-center"></div>
         </div>
       )}
     </>

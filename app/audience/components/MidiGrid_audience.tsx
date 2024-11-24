@@ -8,7 +8,7 @@ import {
   useEdges,
   useNodesData,
 } from "@xyflow/react";
-import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
+
 import * as Tone from "tone";
 import {
   createInterative,
@@ -47,9 +47,6 @@ const midiToFrequency = (midiNote: number): number =>
   440 * Math.pow(2, (midiNote - 69) / 12);
 
 const MidiGrid = ({ id, data, selected }: MidiGridData) => {
-  const edges = useEdges();
-  const nodesData = useNodesData(edges.map((edge) => edge.source));
-
   const numCols = 8; // Number of columns (beats per bar)
   const numRows = 7; // Number of rows (MIDI notes)
   const [gridData, setGridData] = useState<boolean[]>(
@@ -66,7 +63,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
         const componentId = await createInterative(roomId, {
           data: Array(numCols * numRows).fill(false),
         });
-        updateNode(id, { id: componentId });
+        //updateNode(id, { id: componentId });
       }
       if (data.id) {
         const interactiveData = await fetchInteractive(data.id);
@@ -125,17 +122,8 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     });
   };
 
-  const triggerConnection = getHandleConnections(id, "source", "trigger");
-  const triggerConnections =
-    triggerConnection.length > 0 ? triggerConnection : [];
-  const triggerSourceNodeData: Tone.ToneAudioNode[] = triggerConnections.map(
-    (connection) => {
-      return getNodeData(connection.target, "component") as Tone.ToneAudioNode;
-    }
-  );
-
   useEffect(() => {
-    updateNode(id, { grid: gridData });
+    //updateNode(id, { grid: gridData });
 
     console.log(Tone.getTransport().bpm.value);
     // Create a Tone.Part
@@ -149,42 +137,9 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
           const index = row * numCols + col;
           if (gridData[index]) {
             isColumnEmpty = false;
-            // Play a simple sine wave for the active note
-            updateNode(id, {
-              midi: midiToFrequency(whiteKeys[Object.keys(whiteKeys)[6 - row]]),
-            });
-            //console.log(triggerSourceNodeData);
-            if (triggerSourceNodeData.length > 0) {
-              triggerSourceNodeData.forEach((component) => {
-                if (
-                  component &&
-                  "triggerAttack" in component &&
-                  typeof component.triggerAttack === "function"
-                ) {
-                  component.triggerAttack();
-                  console.log("triggerAttack");
-                }
-              });
-            }
-            break;
           }
         }
         if (isColumnEmpty) {
-          updateNode(id, {
-            midi: 0.01,
-          });
-          if (triggerSourceNodeData.length > 0) {
-            triggerSourceNodeData.forEach((component) => {
-              if (
-                component &&
-                "triggerRelease" in component &&
-                typeof component.triggerRelease === "function"
-              ) {
-                component.triggerRelease();
-                console.log("triggerRelease");
-              }
-            });
-          }
         }
       },
       Array.from({ length: numCols }, (_, i) => [i * 0.25, i])
@@ -200,46 +155,32 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
 
   return (
     <>
-      <div
-        className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
-      >
+      <div className="block overflow-auto px-4 py-6 rounded shadow-md backdrop-blur-[2px] border">
         {loaded ? (
           <>
-            {/* Grid */}
-            <div className="nodrag grid grid-cols-8 gap-1">
-              {Array.from({ length: numRows * numCols }).map((_, index) => {
-                const col = index % numCols;
-                return (
-                  <div
-                    key={index}
-                    className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
-                      gridData[index]
-                        ? activeColumn === col
-                          ? "bg-blue-400 opacity-95"
-                          : "bg-blue-500 opacity-95"
-                        : activeColumn === col
-                          ? "bg-blue-500 opacity-25"
-                          : "bg-blue-300 opacity-10"
-                    }`}
-                    onClick={() => handleGridClick(index)}
-                  ></div>
-                );
-              })}
+            {/* Grid 容器 */}
+            <div className="nodrag w-full">
+              <div className="w-max grid grid-cols-8 gap-1">
+                {Array.from({ length: numRows * numCols }).map((_, index) => {
+                  const col = index % numCols;
+                  return (
+                    <div
+                      key={index}
+                      className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
+                        gridData[index]
+                          ? activeColumn === col
+                            ? "bg-blue-400 opacity-95"
+                            : "bg-blue-500 opacity-95"
+                          : activeColumn === col
+                            ? "bg-blue-500 opacity-25"
+                            : "bg-blue-300 opacity-10"
+                      }`}
+                      onClick={() => handleGridClick(index)}
+                    ></div>
+                  );
+                })}
+              </div>
             </div>
-
-            <Handle
-              type="source"
-              position={Position.Right}
-              style={{ top: "30%" }}
-              id="midi"
-            />
-            <Handle
-              type="source"
-              position={Position.Right}
-              style={{ top: "70%" }}
-              id="trigger"
-            />
-
             <div className="my-label">{data.label as string}</div>
           </>
         ) : (

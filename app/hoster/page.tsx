@@ -17,6 +17,7 @@ import {
   updateLastTime,
   fetchNodesAndEdges,
   updateNodesAndEdges,
+  deleteInteractive,
 } from "../utils";
 import { ReactFlow, Controls, Background, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -179,6 +180,15 @@ function Page() {
     },
   ];
 
+  function handleDelete(nodes: any) {
+    nodes.forEach((node: any) => {
+      if (node.type === "midigrid") {
+        console.log("delete", node.data.id);
+        deleteInteractive(node.data.id);
+      }
+    });
+  }
+
   return (
     <>
       <div className="flex justify-center mt-4">
@@ -303,6 +313,10 @@ function Page() {
               // }}
               onNodeClick={(event, node) => {
                 handleNodeSelection(node);
+              }}
+              onDelete={({ nodes, edges }) => {
+                console.log("delete", nodes, edges);
+                handleDelete(nodes);
               }}
               fitView
             >

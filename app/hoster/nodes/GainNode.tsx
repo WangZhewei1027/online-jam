@@ -148,13 +148,13 @@ const GainNode = ({ id, data: { label, value }, selected }: GainNodeProps) => {
         <div className="flex place-content-between">
           <div className="text-sm">Gain</div>
           <div className="text-sm">
-            {disabled ? "-" : (gain * 100).toFixed(0)} %
+            {disabled ? "-" : (gain * 100).toFixed(1)} %
           </div>
         </div>
         <Slider
           min={0}
-          max={3}
-          step={0.01}
+          max={2}
+          step={0.001}
           defaultValue={[value ? value : 1]}
           onValueChange={(num) => setGain(num[0])}
           className="nodrag w-32 mt-2 data-[disabled]:opacity-50"

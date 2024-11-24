@@ -248,3 +248,24 @@ export async function updateInteractive(componentId: string, newData: any) {
     console.log(data);
   }
 }
+
+export async function deleteInteractive(componentId: string) {
+  const { data, error } = await supabase
+    .from("interactive")
+    .delete()
+    .eq("id", componentId)
+    .select();
+  if (data) {
+    console.log(data);
+  }
+}
+
+export async function getAllInteractive(roomId: string) {
+  const { data, error } = await supabase
+    .from("interactive")
+    .select("id, data, type")
+    .eq("from_room", roomId);
+  if (data) {
+    return data;
+  }
+}

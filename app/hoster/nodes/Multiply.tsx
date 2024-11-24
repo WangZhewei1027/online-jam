@@ -49,7 +49,7 @@ function Multiply({
   }, [number]);
 
   useEffect(() => {
-    console.log("inputSourceNodeData", inputSourceNodeData);
+    //console.log("inputSourceNodeData", inputSourceNodeData);
     updateNode(id, {
       output: inputSourceNodeData ? inputSourceNodeData * number : 0,
       value: number,
