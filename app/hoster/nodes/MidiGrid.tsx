@@ -61,9 +61,10 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
 
   useEffect(() => {
     async function init() {
+      var componentId = "";
       if (!data.id) {
         const roomId = await getRoomId();
-        const componentId = await createInterative(roomId, {
+        componentId = await createInterative(roomId, {
           data: Array(numCols * numRows).fill(false),
         });
         updateNode(id, { id: componentId });
@@ -86,7 +87,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             event: "UPDATE",
             schema: "public",
             table: "interactive",
-            filter: `id=eq.${data.id}`,
+            filter: `id=eq.${componentId}`,
           },
           (payload) => {
             //console.log("payload", payload.new.data.data);
