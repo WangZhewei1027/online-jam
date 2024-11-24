@@ -47,6 +47,7 @@ const midiToFrequency = (midiNote: number): number =>
   440 * Math.pow(2, (midiNote - 69) / 12);
 
 const MidiGrid = ({ id, data, selected }: MidiGridData) => {
+  console.log("MidiGrid 渲染");
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
@@ -135,6 +136,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     const triggerConnection = getHandleConnections(id, "source", "trigger");
     const triggerConnections =
       triggerConnection.length > 0 ? triggerConnection : [];
+    console.log(triggerConnections);
     return triggerConnections.map(
       (connection) =>
         getNodeData(connection.target, "component") as Tone.ToneAudioNode
@@ -159,7 +161,6 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             updateNode(id, {
               midi: midiToFrequency(whiteKeys[Object.keys(whiteKeys)[6 - row]]),
             });
-            //console.log(triggerSourceNodeData);
             if (triggerSourceNodeData.length > 0) {
               triggerSourceNodeData.forEach((component) => {
                 if (
