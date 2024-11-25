@@ -314,10 +314,10 @@ function Page() {
               // onNodeClick={(event, node) => {
               //   handleNodeSelection(node);
               // }}
-              // onDelete={({ nodes, edges }) => {
-              //   console.log("delete", nodes, edges);
-              //   handleDelete(nodes);
-              // }}
+              onDelete={({ nodes, edges }) => {
+                console.log("delete", nodes, edges);
+                handleDelete(nodes);
+              }}
               fitView
             >
               <Background />

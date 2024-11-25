@@ -5,8 +5,7 @@ import * as Tone from "tone";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/ui/spinner";
-import { MdPlayArrow } from "react-icons/md";
-import { MdPause } from "react-icons/md";
+import { MdPlayArrow, MdPause } from "react-icons/md";
 import {
   getRoomId,
   fetchSequencerData,
@@ -66,7 +65,13 @@ const Switch: React.FC<SwitchProps> = ({
   return (
     <div
       id="switch"
-      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-6 h-7 hover:border-2 rounded-sm`}
+      className={`flex items-center justify-center ${
+        enabled
+          ? clock === index
+            ? "bg-green-300"
+            : "bg-green-500"
+          : "bg-green-500 opacity-20"
+      } border border-gray-700 p-2 cursor-pointer w-6 h-7 hover:border-2 rounded-sm`}
       onMouseDown={toggleSwitch}
     ></div>
   );
@@ -88,26 +93,8 @@ export default function Sequencer({
   const [json, setData] = useState<{ [key: string]: number[] }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
   const [roomId, setRoomId] = useState("");
-  const [clockInterval, setClockInterval] = useState(200);
   const [volumn, setVolumn] = useState(-2);
 
-  // Clock signal
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (!playing) {
-        return;
-      }
-      setClock((prev) => (prev + 1) % maxClock);
-      console.log("Clock: " + clock);
-    }, 30000 / bpm);
-
-    console.log("Clock interval: " + 30000 / bpm);
-    return () => {
-      clearInterval(intervalId); // Cleanup interval on component unmount
-    };
-  }, [playing, bpm]);
-
-  //initialize the data
   useEffect(() => {
     async function init() {
       // Get the room ID from the URL
@@ -117,13 +104,8 @@ export default function Sequencer({
       updateLastTime(roomId);
 
       // Fetch the sequencer data from the database
-      var data = await fetchSequencerData(roomId);
-      console.log(data);
-
-      // Set the sequencer data to the state
+      const data = await fetchSequencerData(roomId);
       setData(data[0].sequencer);
-
-      // Set data loaded to true, so that the UI can be rendered
       setDataLoaded(true);
 
       // Subscribe to changes in the database
@@ -143,41 +125,53 @@ export default function Sequencer({
         )
         .subscribe();
 
-      //Load all sounds
+      // Load all sounds
       const loadAllSounds = async () => {
-        var players: { [key: string]: Tone.Player } = {};
-
+        const loadedPlayers: { [key: string]: Tone.Player } = {};
         sounds.forEach((sound) => {
-          players[sound] = new Tone.Player(
+          loadedPlayers[sound] = new Tone.Player(
             `/drum212/${sound}.mp3`
           ).toDestination();
-          players[sound].volume.value = volumn;
+          loadedPlayers[sound].volume.value = volumn;
         });
-
-        setPlayers(players);
-
-        console.log("All sounds loaded");
+        setPlayers(loadedPlayers);
       };
 
       await loadAllSounds();
+
+      // Initialize Tone.Transport
+      Tone.getTransport().bpm.value = bpm;
+      Tone.getTransport().scheduleRepeat((time) => {
+        setClock((prev) => (prev + 1) % maxClock);
+      }, "8n");
     }
 
     init();
   }, []);
 
+  useEffect(() => {
+    if (players) {
+      Object.keys(players).forEach((key) => {
+        players[key].volume.value = volumn;
+      });
+    }
+  }, [volumn, players]);
+
   function handleClick() {
     Tone.start();
+    if (playing) {
+      Tone.getTransport().stop();
+    } else {
+      Tone.getTransport().start();
+    }
     setPlaying(!playing);
-    console.log("Playing: " + playing);
   }
 
   function handleToggle(instrument: string, index: number, change: boolean) {
-    console.log(instrument, index, change);
     const newJson = { ...json };
     if (newJson[instrument]) {
       newJson[instrument][index] = change ? 1 : 0;
     }
-    console.log(newJson);
     setData(newJson);
     updataSequencerData(roomId, newJson);
   }
@@ -205,13 +199,17 @@ export default function Sequencer({
                   {[...Array(64)].map((_, index) => (
                     <div
                       key={index}
-                      className={`${Math.floor(index / sounds.length) === clock ? "bg-gray-300" : ""} p-[2px]`}
+                      className={`${
+                        Math.floor(index / sounds.length) === clock
+                          ? "bg-gray-300"
+                          : ""
+                      } p-[2px]`}
                     >
                       <Switch
                         name={sounds[index % sounds.length]}
                         clock={clock}
                         index={Math.floor(index / sounds.length)}
-                        player={players[sounds[index % sounds.length]]} // Pass down preloaded Tone.Players
+                        player={players[sounds[index % sounds.length]]}
                         change={
                           json !== null && Object.keys(json).length > 0
                             ? json[sounds[index % sounds.length]][
@@ -261,7 +259,9 @@ export default function Sequencer({
         </>
       ) : (
         <div className="p-2 md:p-4 flex justify-center">
-          <div className="p-2 border rounded-sm flex w-[963px] h-[274px] justify-center items-center"></div>
+          <div className="p-2 border rounded-sm flex w-[963px] h-[274px] justify-center items-center">
+            <Spinner />
+          </div>
         </div>
       )}
     </>
