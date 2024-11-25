@@ -36,5 +36,6 @@ export function useNodes() {
     addXYPad: () => addNode("xypad", "XYPad"),
     addMultiply: () => addNode("multiply", "Multiply"),
     addMidiGrid: () => addNode("midigrid", "Midi Grid"),
+    addReverb: () => addNode("reverb", "Reverb"),
   };
 }

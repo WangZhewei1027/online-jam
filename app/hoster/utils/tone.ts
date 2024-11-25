@@ -40,6 +40,7 @@ export function isFunctionalNode(node: any): node is FunctionalNode {
     node instanceof Tone.Gain ||
     node instanceof Tone.Filter ||
     node instanceof Tone.Panner ||
-    node instanceof Tone.Compressor
+    node instanceof Tone.Compressor ||
+    node instanceof Tone.Reverb
   );
 }

@@ -27,6 +27,7 @@ import Text from "../nodes/Text";
 import XYPad from "../nodes/XYPad";
 import Multiply from "../nodes/Multiply";
 import MidiGrid from "../nodes/MidiGrid";
+import Reverb from "../nodes/Reverb";
 
 interface MyNode extends Node {
   data: {
@@ -121,6 +122,7 @@ export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
     xypad: XYPad,
     multiply: Multiply,
     midigrid: MidiGrid,
+    reverb: Reverb,
   },
 
   onNodesChange(changes: NodeChange[]) {

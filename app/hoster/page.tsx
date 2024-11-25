@@ -79,6 +79,7 @@ function Page() {
     addXYPad,
     addMultiply,
     addMidiGrid,
+    addReverb,
   } = useNodes();
 
   async function handleQRCodeClick() {
@@ -176,6 +177,7 @@ function Page() {
         { label: "New Gain Node", onClick: addGainNode },
         { label: "New Destination", onClick: addDestination },
         { label: "New Envelope", onClick: addEnvelope },
+        { label: "New Reverb", onClick: addReverb },
       ],
     },
   ];
