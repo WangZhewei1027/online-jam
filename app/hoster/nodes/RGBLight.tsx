@@ -9,6 +9,7 @@ import {
 } from "@xyflow/react";
 import "../styles.css";
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
+import * as Tone from "tone";
 
 function RGBLight({
   id,
@@ -23,22 +24,30 @@ function RGBLight({
     redConnection.length > 0 && redConnection[0].sourceHandle
       ? getNodeData(redConnection[0].source, redConnection[0].sourceHandle)
       : null;
-  const red = typeof redSourceNodeData === "number" ? redSourceNodeData : 0;
+  var red = 0;
+  if (redSourceNodeData instanceof Tone.Signal) {
+    red = redSourceNodeData.value;
+  }
 
   const greenConnection = getHandleConnections(id, "target", "green");
   const greenSourceNodeData =
     greenConnection.length > 0 && greenConnection[0].sourceHandle
       ? getNodeData(greenConnection[0].source, greenConnection[0].sourceHandle)
       : null;
-  const green =
-    typeof greenSourceNodeData === "number" ? greenSourceNodeData : 0;
+  var green = 0;
+  if (greenSourceNodeData instanceof Tone.Signal) {
+    green = greenSourceNodeData.value;
+  }
 
   const blueConnection = getHandleConnections(id, "target", "blue");
   const blueSourceNodeData =
     blueConnection.length > 0 && blueConnection[0].sourceHandle
       ? getNodeData(blueConnection[0].source, blueConnection[0].sourceHandle)
       : null;
-  const blue = typeof blueSourceNodeData === "number" ? blueSourceNodeData : 0;
+  var blue = 0;
+  if (blueSourceNodeData instanceof Tone.Signal) {
+    blue = blueSourceNodeData.value;
+  }
 
   return (
     <div

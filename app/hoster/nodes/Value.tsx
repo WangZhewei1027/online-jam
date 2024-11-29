@@ -39,7 +39,7 @@ function Value({
   } else if (sourceNodeData instanceof Tone.Signal) {
     info = sourceNodeData.value;
   } else {
-    info = "null";
+    info = "Null";
   }
 
   return (
