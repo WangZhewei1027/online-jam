@@ -38,6 +38,8 @@ interface MyNode extends Node {
 }
 
 export interface StoreState {
+  debug: boolean;
+  setDebug: (debug: boolean) => void;
   nodes: MyNode[];
   nodes_selectedValue: Omit<Node, "position">[];
   last_selected_node_position: { x: number; y: number };
@@ -99,6 +101,10 @@ export interface StoreState {
 }
 
 export const useStore = createWithEqualityFn<StoreState>((set, get) => ({
+  debug: false,
+  setDebug: (debug: boolean) => {
+    set({ debug }), console.log("debug: ", debug);
+  },
   nodes: [],
   nodes_selectedValue: [],
   last_selected_node_position: { x: 0, y: 0 },

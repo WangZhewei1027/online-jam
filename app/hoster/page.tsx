@@ -32,9 +32,11 @@ import { shallow } from "zustand/shallow";
 import { useStore, StoreState } from "./utils/store";
 import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
-import { handleNodeSelection } from "./utils/store";
+import { Switch } from "@/components/ui/switch";
 
 const selector = (store: StoreState) => ({
+  debug: store.debug,
+  setDebug: store.setDebug,
   nodes: store.nodes,
   edges: store.edges,
   nodeTypes: store.nodeTypes,
@@ -52,6 +54,7 @@ const selector = (store: StoreState) => ({
   onReconnectEnd: store.onReconnectEnd,
 });
 import TransportControl from "./components/TransportControl";
+import { debug } from "console";
 
 function Page() {
   const [qrCodeUrl, setQrCodeUrl] = useState(""); // Holds the QR code URL
@@ -260,7 +263,7 @@ function Page() {
           </div>
 
           {/* Undo Redo */}
-          <div className="absolute top-20 right-4 p-2 z-10 space-x-2">
+          <div className="absolute top-20 right-4 p-2 z-10 space-y-2 flex flex-col justify-center">
             <Button
               variant={"outline"}
               onClick={store.undo}
@@ -275,6 +278,12 @@ function Page() {
             >
               <MdOutlineRedo className="w-full h-full" />
             </Button>
+            <Switch
+              name="Debug"
+              onCheckedChange={(check) => {
+                store.setDebug(check);
+              }}
+            />
           </div>
 
           {/* Transport Control */}

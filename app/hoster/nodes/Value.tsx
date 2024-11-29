@@ -9,6 +9,7 @@ import {
 } from "@xyflow/react";
 import "../styles.css";
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
+import * as Tone from "tone";
 
 function Value({
   id,
@@ -25,16 +26,21 @@ function Value({
     connections.length > 0 && connections[0].sourceHandle
       ? getNodeData(connections[0].source, connections[0].sourceHandle)
       : null;
-  const sourceNodeValue =
-    connections.length > 0 && connections[0].sourceHandle
-      ? getNodeData(connections[0].source, "value")
-      : null;
-  const info =
-    typeof sourceNodeData === "number" || typeof sourceNodeData === "string"
-      ? sourceNodeData
-      : sourceNodeValue
-        ? sourceNodeValue
-        : 0;
+  // const sourceNodeValue =
+  //   connections.length > 0 && connections[0].sourceHandle
+  //     ? getNodeData(connections[0].source, "value")
+  //     : null;
+  let info;
+  if (
+    typeof sourceNodeData === "number" ||
+    typeof sourceNodeData === "string"
+  ) {
+    info = sourceNodeData;
+  } else if (sourceNodeData instanceof Tone.Signal) {
+    info = sourceNodeData.value;
+  } else {
+    info = "null";
+  }
 
   return (
     <div className={`style-node ${selected ? "style-node-selected" : ""} `}>

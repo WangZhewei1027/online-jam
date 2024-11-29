@@ -59,6 +59,14 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
   const tonePartRef = useRef<Tone.Part | null>(null);
   const [loaded, setLoaded] = useState(false);
 
+  const signalRef = useRef<Tone.Signal | null>(null);
+
+  useEffect(() => {
+    if (!signalRef.current) {
+      signalRef.current = new Tone.Signal(0);
+    }
+  }, []);
+
   useEffect(() => {
     async function init() {
       var componentId = "";

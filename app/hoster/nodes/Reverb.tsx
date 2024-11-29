@@ -7,6 +7,10 @@ import TargetHandle from "./TargetHandle";
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 import { Slider } from "@/components/ui/slider";
 import { GiEchoRipples } from "react-icons/gi";
+import { useStore, StoreState } from "../utils/store";
+import { shallow } from "zustand/shallow";
+import Debugger from "../components/Debugger";
+import { useEdges, useNodesData } from "@xyflow/react";
 
 interface ReverbNodeProps extends NodeProps {
   data: {
@@ -16,7 +20,15 @@ interface ReverbNodeProps extends NodeProps {
   };
 }
 
+const selector = (store: StoreState) => ({
+  debug: store.debug,
+});
+
 const Reverb = ({ id, data: { label, wet }, selected }: ReverbNodeProps) => {
+  const store = useStore(selector, shallow);
+
+  const edges = useEdges();
+
   const [wetValue, setWetValue] = useState(wet ?? 0.5); // 默认湿干比为 50%
   const audioComponent = useRef<Tone.ToneAudioNode | null>(null);
   const reverbRef = useRef<Tone.Reverb | null>(null);
@@ -107,6 +119,7 @@ const Reverb = ({ id, data: { label, wet }, selected }: ReverbNodeProps) => {
 
       {/* 显示标签 */}
       <div className="absolute left-0 -top-6 text-base">{label}</div>
+      {store.debug && <Debugger text={audioConnection.length} />}
     </div>
   );
 };
