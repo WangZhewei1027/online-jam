@@ -69,7 +69,7 @@
 }
 
 .react-flow__handle {
-  width: 8px !important;  /* Increase width */
+  width: 8px !important; /* Increase width */
   height: 8px !important; /* Increase height */
-  background: #171717;        /* Optional: change color */
+  background: #171717; /* Optional: change color */
 }

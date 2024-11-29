@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import "@/app/globals.css";
 
 const Waveform = ({
   frequency,
@@ -102,9 +103,9 @@ const Waveform = ({
         <rect width="100%" height="100%" fill="transparent" />
         <path
           d={generateWaveformPath()}
-          stroke="#171717"
           strokeWidth="2"
           fill="none"
+          stroke="hsl(var(--primary))"
         />
       </svg>
     </div>
