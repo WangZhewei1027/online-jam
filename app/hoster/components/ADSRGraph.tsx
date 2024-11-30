@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import "@/app/globals.css";
 
 const ADSRGraph = ({
   attack,
@@ -58,7 +59,7 @@ const ADSRGraph = ({
              L${decayX},${sustainY} 
              L${sustainX},${sustainY} 
              L${releaseX},${bottomY}`}
-          stroke="#171717" // Black line
+          stroke="hsl(var(--primary))"
           strokeWidth="2"
           fill="none" // Transparent fill
         />

@@ -57,7 +57,7 @@ const TransportControl = () => {
   };
 
   return (
-    <div className="p-4 border rounded-md shadow-md w-64 mx-auto">
+    <div className="p-4 border rounded-md shadow-md w-64 mx-auto backdrop-blur-sm">
       <h2 className="text-lg font-bold mb-4">Global Transport Control</h2>
 
       {/* 显示当前位置 */}

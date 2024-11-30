@@ -11,8 +11,14 @@ import {
 import "../styles.css";
 import * as Tone from "tone";
 import Debugger from "../components/Debugger";
+import { useStore, StoreState } from "../utils/store";
+import { shallow } from "zustand/shallow";
 
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
+
+const selector = (store: StoreState) => ({
+  debug: store.debug,
+});
 
 function Multiply({
   id,
@@ -20,6 +26,8 @@ function Multiply({
   selected,
   ...props
 }: NodeProps & { data: { label: string; output: number; value: number } }) {
+  const store = useStore(selector, shallow);
+
   const edges = useEdges();
   const nodesData = useNodesData(edges.map((edge) => edge.source));
 
@@ -45,7 +53,7 @@ function Multiply({
     const newValue = evt.target.value;
     setNumber(newValue);
     if (mutiplyRef.current) {
-      mutiplyRef.current.value = newValue;
+      mutiplyRef.current.value = newValue ?? 0;
     }
     updateNode(id, {
       value: newValue,
@@ -101,7 +109,7 @@ function Multiply({
         id="component"
       />
       <div className="absolute left-0 -top-6 text-base">{label}</div>
-      <Debugger text={String(mutiplyRef.current?.input)} />
+      {store.debug && <Debugger text={String(mutiplyRef.current?.input)} />}
     </div>
   );
 }

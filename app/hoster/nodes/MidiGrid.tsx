@@ -16,7 +16,6 @@ import {
   fetchInteractive,
   updateInteractive,
 } from "@/app/utils";
-import Spinner from "@/components/ui/spinner";
 
 import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(
@@ -64,6 +63,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
   useEffect(() => {
     if (!signalRef.current) {
       signalRef.current = new Tone.Signal(0);
+      updateNode(id, { component: signalRef.current });
     }
   }, []);
 
@@ -138,18 +138,6 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
     });
   };
 
-  // const triggerSourceNodeData: Tone.ToneAudioNode[] = useMemo(() => {
-  //   console.log(edges);
-  //   const triggerConnection = getHandleConnections(id, "source", "trigger");
-  //   const triggerConnections =
-  //     triggerConnection.length > 0 ? triggerConnection : [];
-  //   console.log(triggerConnections);
-  //   return triggerConnections.map(
-  //     (connection) =>
-  //       getNodeData(connection.target, "component") as Tone.ToneAudioNode
-  //   );
-  // }, [id, edges]);
-
   useEffect(() => {
     updateNode(id, { grid: gridData });
 
@@ -180,6 +168,10 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             updateNode(id, {
               midi: midiToFrequency(whiteKeys[Object.keys(whiteKeys)[6 - row]]),
             });
+            signalRef.current?.setValueAtTime(
+              midiToFrequency(whiteKeys[Object.keys(whiteKeys)[6 - row]]),
+              Tone.now()
+            );
             if (triggerSourceNodeData.length > 0) {
               triggerSourceNodeData.forEach((component) => {
                 if (
@@ -199,6 +191,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
           updateNode(id, {
             midi: 0.01,
           });
+          signalRef.current?.setValueAtTime(0.01, Tone.now());
           if (triggerSourceNodeData.length > 0) {
             triggerSourceNodeData.forEach((component) => {
               if (
@@ -256,7 +249,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             type="source"
             position={Position.Right}
             style={{ top: "30%" }}
-            id="midi"
+            id="component"
           />
           <Handle
             type="source"
