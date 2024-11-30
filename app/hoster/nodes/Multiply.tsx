@@ -1,5 +1,5 @@
 "use client";
-import { use, useCallback, useState, useEffect } from "react";
+import { use, useCallback, useState, useEffect, useRef } from "react";
 import {
   Handle,
   Position,
@@ -9,6 +9,8 @@ import {
   useNodesData,
 } from "@xyflow/react";
 import "../styles.css";
+import * as Tone from "tone";
+import Debugger from "../components/Debugger";
 
 import { getHandleConnections, getNodeData, updateNode } from "../utils/store";
 
@@ -23,37 +25,56 @@ function Multiply({
 
   const [number, setNumber] = useState<number>(value ?? 1);
 
+  const signalRef = useRef<Tone.Signal | null>(null);
+
+  const mutiplyRef = useRef<Tone.Multiply | null>(null);
+
   const inputConnections = getHandleConnections(id, "target", "input");
-  const inputSourceNodeData: number | null =
-    inputConnections.length > 0 && inputConnections[0].sourceHandle
-      ? getNodeData(
-          inputConnections[0].source,
-          inputConnections[0].sourceHandle
-        )
-      : null;
+  var inputSourceNodeData: Tone.Signal | null = null;
+  if (inputConnections.length > 0 && inputConnections[0].sourceHandle) {
+    let data = getNodeData(
+      inputConnections[0].source,
+      inputConnections[0].sourceHandle
+    );
+    if (data instanceof Tone.Signal) {
+      inputSourceNodeData = data;
+    }
+  }
 
   const onChange = (evt: any) => {
     const newValue = evt.target.value;
     setNumber(newValue);
+    if (mutiplyRef.current) {
+      mutiplyRef.current.value = newValue;
+    }
     updateNode(id, {
-      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
       value: newValue,
     });
+    console.log("Multiply onChange", mutiplyRef.current);
   };
 
   useEffect(() => {
-    updateNode(id, {
-      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
-      value: number,
-    });
-  }, [number]);
+    if (!mutiplyRef.current) {
+      mutiplyRef.current = new Tone.Multiply(value);
+      updateNode(id, { component: mutiplyRef.current });
+    }
+    return () => {
+      signalRef.current?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
-    //console.log("inputSourceNodeData", inputSourceNodeData);
-    updateNode(id, {
-      output: inputSourceNodeData ? inputSourceNodeData * number : 0,
-      value: number,
-    });
+    if (inputSourceNodeData && mutiplyRef.current) {
+      inputSourceNodeData.connect(mutiplyRef.current);
+      console.log("connected");
+    }
+
+    return () => {
+      if (inputSourceNodeData && mutiplyRef.current) {
+        inputSourceNodeData.disconnect(mutiplyRef.current);
+        console.log("disconnected");
+      }
+    };
   }, [inputSourceNodeData]);
 
   return (
@@ -77,9 +98,10 @@ function Multiply({
         type="source"
         position={Position.Right}
         style={{ width: "10px", height: "10px" }}
-        id="output"
+        id="component"
       />
       <div className="absolute left-0 -top-6 text-base">{label}</div>
+      <Debugger text={String(mutiplyRef.current?.input)} />
     </div>
   );
 }

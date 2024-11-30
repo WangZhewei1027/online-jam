@@ -44,3 +44,8 @@ export function isFunctionalNode(node: any): node is FunctionalNode {
     node instanceof Tone.Reverb
   );
 }
+
+// 可以输出数字的节点
+export function isSignalNode(node: any) {
+  return node instanceof Tone.Signal || node instanceof Tone.Multiply;
+}
