@@ -34,6 +34,8 @@ import { useKeyboardShortcuts } from "./utils/useKeyboardShortcuts";
 import { useNodes } from "./hooks/useNodes";
 import { Switch } from "@/components/ui/switch";
 
+import FFTAnalyzer from "./components/FFTAnalyzer";
+
 const selector = (store: StoreState) => ({
   debug: store.debug,
   setDebug: store.setDebug,
@@ -196,6 +198,7 @@ function Page() {
 
   return (
     <>
+      <FFTAnalyzer />
       <div className="flex justify-center mt-4">
         {/* Title and QR Code */}
         <div className="absolute top-3 z-20">

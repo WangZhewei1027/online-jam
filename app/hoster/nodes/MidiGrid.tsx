@@ -16,7 +16,6 @@ import {
   fetchInteractive,
   updateInteractive,
 } from "@/app/utils";
-import "../styles.css";
 
 import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(
@@ -221,7 +220,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
   return (
     <>
       <div
-        className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
+        className={`style-node ${selected ? "style-node-selected" : ""} items-center border-glow`}
       >
         <div className="inner">
           <div className="body">
