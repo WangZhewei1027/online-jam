@@ -16,6 +16,7 @@ import {
   fetchInteractive,
   updateInteractive,
 } from "@/app/utils";
+import "../styles.css";
 
 import { createClient } from "@supabase/supabase-js";
 const supabase = createClient(
@@ -222,44 +223,46 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
       <div
         className={`style-node ${selected ? "style-node-selected" : ""} items-center`}
       >
-        <>
-          {/* Grid */}
-          <div className="nodrag grid grid-cols-8 gap-1">
-            {Array.from({ length: numRows * numCols }).map((_, index) => {
-              const col = index % numCols;
-              return (
-                <div
-                  key={index}
-                  className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
-                    gridData[index]
-                      ? activeColumn === col
-                        ? "bg-blue-400 opacity-95"
-                        : "bg-blue-500 opacity-95"
-                      : activeColumn === col
-                        ? "bg-blue-500 opacity-25"
-                        : "bg-blue-300 opacity-10"
-                  }`}
-                  onClick={() => handleGridClick(index)}
-                ></div>
-              );
-            })}
+        <div className="inner">
+          <div className="body">
+            {/* Grid */}
+            <div className="nodrag grid grid-cols-8 gap-1">
+              {Array.from({ length: numRows * numCols }).map((_, index) => {
+                const col = index % numCols;
+                return (
+                  <div
+                    key={index}
+                    className={`border border-gray-400 w-16 h-8 cursor-pointer hover:border-2 hover:border-gray-600 rounded-sm transition-all ${
+                      gridData[index]
+                        ? activeColumn === col
+                          ? "bg-blue-400 opacity-95"
+                          : "bg-blue-500 opacity-95"
+                        : activeColumn === col
+                          ? "bg-blue-500 opacity-25"
+                          : "bg-blue-300 opacity-10"
+                    }`}
+                    onClick={() => handleGridClick(index)}
+                  ></div>
+                );
+              })}
+            </div>
+
+            <Handle
+              type="source"
+              position={Position.Right}
+              style={{ top: "30%" }}
+              id="component"
+            />
+            <Handle
+              type="source"
+              position={Position.Right}
+              style={{ top: "70%" }}
+              id="trigger"
+            />
+
+            <div className="my-label">{data.label as string}</div>
           </div>
-
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ top: "30%" }}
-            id="component"
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ top: "70%" }}
-            id="trigger"
-          />
-
-          <div className="my-label">{data.label as string}</div>
-        </>
+        </div>
       </div>
     </>
   );
