@@ -335,7 +335,7 @@ function Page() {
               fitView
             >
               <Background />
-              <Controls />
+              {/* <Controls /> */}
             </ReactFlow>
           </div>
         </>
