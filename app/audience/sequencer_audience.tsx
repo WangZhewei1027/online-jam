@@ -62,7 +62,7 @@ const Switch: React.FC<SwitchProps> = ({
   return (
     <div
       id="switch"
-      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-12 h-14 hover:border-2 rounded-lg`}
+      className={`flex items-center justify-center ${enabled ? (clock == index ? "bg-green-300" : "bg-green-500") : "bg-green-500 opacity-20"} border border-gray-700 p-2 cursor-pointer w-8 h-10 hover:border-2 rounded-lg`}
       onMouseDown={toggleSwitch}
     ></div>
   );
@@ -173,7 +173,7 @@ export default function Sequencer() {
                 <div className="flex flex-col h-full gap-2">
                   {Object.keys(players).map((key) => (
                     <div
-                      className="flex justify-center items-center font-serif h-full"
+                      className="flex justify-center items-center font-serif h-full text-sm"
                       key={key}
                     >
                       {key.charAt(0).toUpperCase() + key.slice(1)}

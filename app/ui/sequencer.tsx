@@ -71,7 +71,7 @@ const Switch: React.FC<SwitchProps> = ({
             ? "bg-green-300"
             : "bg-green-500"
           : "bg-green-500 opacity-20"
-      } border border-gray-700 p-2 cursor-pointer w-6 h-7 hover:border-2 rounded-sm`}
+      } border border-gray-700 p-2 cursor-pointer w-8 h-10 hover:border-2 rounded-sm`}
       onMouseDown={toggleSwitch}
     ></div>
   );
@@ -181,12 +181,12 @@ export default function Sequencer({
       {dataLoaded ? (
         <>
           <div className="flex justify-center">
-            <div className="nodrag p-2 rounded-sm flex max-w-[963px] overflow-hidden">
+            <div className="nodrag p-4 rounded-sm flex max-w-[963px] overflow-hidden">
               <div className="inline mr-2">
                 <div className="flex flex-col h-full gap-2">
                   {Object.keys(players).map((key) => (
                     <div
-                      className="flex justify-center items-center font-serif h-full text-[10px]"
+                      className="flex justify-center items-center font-serif h-full text-sm"
                       key={key}
                     >
                       {key.charAt(0).toUpperCase() + key.slice(1)}
@@ -229,7 +229,7 @@ export default function Sequencer({
 
           {hoster && (
             <div className="flex flex-col justify-center items-center">
-              <div>
+              {/* <div>
                 <Button
                   onClick={handleClick}
                   className="nodrag mb-2"
@@ -241,7 +241,7 @@ export default function Sequencer({
                     <MdPlayArrow className="w-8 h-8" />
                   )}
                 </Button>
-              </div>
+              </div> */}
               <div className="w-full max-w-64 h-4">
                 <Slider
                   min={-32}
