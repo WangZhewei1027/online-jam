@@ -75,8 +75,9 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
       console.log("init");
       console.log(gridData);
 
+      const channelName = `${id}-${Math.random().toString(36).substr(2, 9)}`;
       const channel = supabase
-        .channel(id)
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -86,7 +87,7 @@ const MidiGrid = ({ id, data, selected }: MidiGridData) => {
             filter: `id=eq.${data.id}`,
           },
           (payload) => {
-            //console.log("payload", payload.new.data.data);
+            console.log("payload", payload.new.data.data);
             setGridData(payload.new.data.data);
           }
         )
